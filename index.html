@@ -1164,12 +1164,12 @@ const Auth = {
     clearAuthStorage();
   },
   async getMyOrg() {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/k2l_org_members?select=org_id,role,k2l_organizations(id,name,logo_data_url)&user_id=eq.${auth.userId}`, { headers: authHeaders() });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/k2l_org_members?select=org_id,role,k2l_organizations(id,name,logo_data_url,plan_status)&user_id=eq.${auth.userId}`, { headers: authHeaders() });
     if (!res.ok) return null;
     const rows = await res.json();
     if (!rows.length) return null;
     const o = rows[0].k2l_organizations;
-    return { id: o.id, name: o.name, logo: o.logo_data_url };
+    return { id: o.id, name: o.name, logo: o.logo_data_url, planStatus: o.plan_status };
   },
   async createOrg(name) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/k2l_organizations`, {
@@ -1186,7 +1186,7 @@ const Auth = {
       body: JSON.stringify([{ org_id: newOrg.id, user_id: auth.userId, role: 'owner' }]),
     });
     if (!memRes.ok) throw new Error('Could not link organization membership');
-    org = { id: newOrg.id, name: newOrg.name, logo: newOrg.logo_data_url };
+    org = { id: newOrg.id, name: newOrg.name, logo: newOrg.logo_data_url, planStatus: newOrg.plan_status };
     saveAuthToStorage();
     return org;
   },
@@ -1198,7 +1198,17 @@ const Auth = {
     });
     const rows = await res.json();
     if (!res.ok) throw new Error('Could not update organization');
-    org = { id: rows[0].id, name: rows[0].name, logo: rows[0].logo_data_url };
+    org = { id: rows[0].id, name: rows[0].name, logo: rows[0].logo_data_url, planStatus: rows[0].plan_status };
+    saveAuthToStorage();
+    return org;
+  },
+  async refreshOrgStatus() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/k2l_organizations?id=eq.${org.id}&select=id,name,logo_data_url,plan_status`, { headers: authHeaders() });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    if (!rows.length) return null;
+    const o = rows[0];
+    org = { id: o.id, name: o.name, logo: o.logo_data_url, planStatus: o.plan_status };
     saveAuthToStorage();
     return org;
   },
@@ -1255,6 +1265,27 @@ let authBusy = false;
 let signupJustSent = false;
 let onboardingBusy = false;
 let onboardingError = null;
+let subscribeBusy = false;
+let subscribeError = null;
+
+const EDGE_FUNCTIONS_URL = `${SUPABASE_URL}/functions/v1`;
+
+async function startCheckout() {
+  subscribeBusy = true; subscribeError = null; render();
+  try {
+    const res = await authFetch(`${EDGE_FUNCTIONS_URL}/create-checkout-session`, {
+      method: 'POST',
+      body: JSON.stringify({ org_id: org.id, email: auth.email }),
+    });
+    const body = await res.json();
+    if (!res.ok || !body.url) throw new Error(body.error || 'Could not start checkout');
+    window.location.href = body.url;
+  } catch (e) {
+    subscribeError = e.message || 'Something went wrong starting checkout.';
+    subscribeBusy = false;
+    render();
+  }
+}
 let hubForm = null;
 let saveTimer = null;
 let saveFlashTimer = null;
@@ -1486,6 +1517,28 @@ function renderOnboardingScreen() {
   `;
 }
 
+function renderSubscribeScreen() {
+  return `
+    <div class="card">
+      <div class="hero-wordmark">KEANE2LEARN</div>
+      <div class="hero-tagline">DRIVING ASSESSMENT</div>
+      <h1>Activate ${escapeHtml(org.name || 'your account')}</h1>
+      <p class="subtitle">One more step — activate your subscription to start creating sessions.</p>
+      ${subscribeError ? `<p class="note warn">${escapeHtml(subscribeError)}</p>` : ''}
+      <div class="score-summary" style="margin:10px 0 4px;">
+        <span class="score-big" style="font-size:26px;">£9.99</span>
+        <span class="score-of">/month</span>
+      </div>
+      <p class="note">Cancel any time from your Stripe receipt email.</p>
+      <button class="btn-primary btn-full" id="btnSubscribe" style="margin-top:14px;" ${subscribeBusy ? 'disabled' : ''}>
+        ${subscribeBusy ? 'Redirecting to checkout…' : 'Subscribe now'}
+      </button>
+      <button class="btn-secondary btn-full" id="btnRefreshStatus">I've already paid — refresh status</button>
+      <p class="note" style="margin-top:10px;">Signed in as ${escapeHtml(auth.email)} · <button class="link-btn" id="btnLogoutSub" style="padding:0;font-size:12.5px;">Log out</button></p>
+    </div>
+  `;
+}
+
 function timeAgo(ts) {
   const mins = Math.round((Date.now() - ts) / 60000);
   if (mins < 1) return 'just now';
@@ -1654,6 +1707,8 @@ function render() {
       html = renderAuthScreen();
     } else if (!org.id) {
       html = renderOnboardingScreen();
+    } else if (org.planStatus !== 'active') {
+      html = renderSubscribeScreen();
     } else {
     if (cachedSessions === null && !sessionsLoading) {
       sessionsLoading = true;
@@ -1891,6 +1946,16 @@ function attachHandlers() {
   });
   const btnAccountSettings = document.getElementById('btnAccountSettings');
   if (btnAccountSettings) btnAccountSettings.addEventListener('click', () => goToStep('account'));
+  const btnSubscribe = document.getElementById('btnSubscribe');
+  if (btnSubscribe) btnSubscribe.addEventListener('click', startCheckout);
+  const btnRefreshStatus = document.getElementById('btnRefreshStatus');
+  if (btnRefreshStatus) btnRefreshStatus.addEventListener('click', async () => {
+    btnRefreshStatus.disabled = true; btnRefreshStatus.textContent = 'Checking…';
+    await Auth.refreshOrgStatus();
+    render();
+  });
+  const btnLogoutSub = document.getElementById('btnLogoutSub');
+  if (btnLogoutSub) btnLogoutSub.addEventListener('click', () => { Auth.logout(); render(); });
   const btnBackToHome = document.getElementById('btnBackToHome');
   if (btnBackToHome) btnBackToHome.addEventListener('click', goHome);
   const btnSaveOrg = document.getElementById('btnSaveOrg');
