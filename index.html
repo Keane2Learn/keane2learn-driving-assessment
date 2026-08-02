@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>Keane2Learn Driving Assessment</title>
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -1164,7 +1167,8 @@ const Auth = {
     clearAuthStorage();
   },
   async getMyOrg() {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/k2l_org_members?select=org_id,role,k2l_organizations(id,name,logo_data_url,plan_status)&user_id=eq.${auth.userId}`, { headers: authHeaders() });
+    if (!auth.accessToken) throw new Error('Not logged in — please log in again.');
+    const res = await authFetch(`${SUPABASE_URL}/rest/v1/k2l_org_members?select=org_id,role,k2l_organizations(id,name,logo_data_url,plan_status)&user_id=eq.${auth.userId}`);
     if (!res.ok) return null;
     const rows = await res.json();
     if (!rows.length) return null;
@@ -1172,17 +1176,17 @@ const Auth = {
     return { id: o.id, name: o.name, logo: o.logo_data_url, planStatus: o.plan_status };
   },
   async createOrg(name) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/k2l_organizations`, {
+    if (!auth.accessToken) throw new Error('Not logged in — please log in again.');
+    const res = await authFetch(`${SUPABASE_URL}/rest/v1/k2l_organizations`, {
       method: 'POST',
-      headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+      headers: { 'Prefer': 'return=representation' },
       body: JSON.stringify([{ name }]),
     });
     const rows = await res.json();
-    if (!res.ok) throw new Error(rows.message || 'Could not create organization');
+    if (!res.ok) throw new Error(rows?.message ? `Could not create organization (${rows.message})` : 'Could not create organization — try logging out and back in.');
     const newOrg = rows[0];
-    const memRes = await fetch(`${SUPABASE_URL}/rest/v1/k2l_org_members`, {
+    const memRes = await authFetch(`${SUPABASE_URL}/rest/v1/k2l_org_members`, {
       method: 'POST',
-      headers: authHeaders(),
       body: JSON.stringify([{ org_id: newOrg.id, user_id: auth.userId, role: 'owner' }]),
     });
     if (!memRes.ok) throw new Error('Could not link organization membership');
@@ -1191,9 +1195,10 @@ const Auth = {
     return org;
   },
   async updateOrg(fields) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/k2l_organizations?id=eq.${org.id}`, {
+    if (!auth.accessToken) throw new Error('Not logged in — please log in again.');
+    const res = await authFetch(`${SUPABASE_URL}/rest/v1/k2l_organizations?id=eq.${org.id}`, {
       method: 'PATCH',
-      headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+      headers: { 'Prefer': 'return=representation' },
       body: JSON.stringify(fields),
     });
     const rows = await res.json();
@@ -1203,7 +1208,8 @@ const Auth = {
     return org;
   },
   async refreshOrgStatus() {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/k2l_organizations?id=eq.${org.id}&select=id,name,logo_data_url,plan_status`, { headers: authHeaders() });
+    if (!auth.accessToken) return null;
+    const res = await authFetch(`${SUPABASE_URL}/rest/v1/k2l_organizations?id=eq.${org.id}&select=id,name,logo_data_url,plan_status`);
     if (!res.ok) return null;
     const rows = await res.json();
     if (!rows.length) return null;
