@@ -1061,6 +1061,7 @@ const STEPS = [
   'home', 'session', 'vehicle',
   'sec_a', 'sec_b', 'sec_c', 'sec_d', 'sec_e', 'sec_f',
   'licence', 'trainerComments', 'feedback', 'signatures', 'review',
+  'account',
 ];
 
 /* ------------------------------------------------------------
@@ -1068,19 +1069,147 @@ const STEPS = [
    ------------------------------------------------------------ */
 
 const SUPABASE_URL = 'https://mtvfcfbvzzrmnejjtrhs.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_Z6tVC44JpFuUZzDhtVg3uA_lIQH63FU';
-const SB_HEADERS = {
-  'apikey': SUPABASE_KEY,
-  'Authorization': 'Bearer ' + SUPABASE_KEY,
-  'Content-Type': 'application/json',
-};
+const SUPABASE_ANON_KEY = 'sb_publishable_Z6tVC44JpFuUZzDhtVg3uA_lIQH63FU';
 const TABLE = 'k2l_sessions';
+
+/* ------------------------------------------------------------
+   Auth state — persisted to localStorage (safe here since this
+   runs from a real hosted origin, not a sandboxed preview).
+   ------------------------------------------------------------ */
+
+let auth = { accessToken: null, refreshToken: null, userId: null, email: null };
+let org = { id: null, name: null, logo: null };
+
+function loadAuthFromStorage() {
+  try {
+    const raw = localStorage.getItem('k2l_auth_v1');
+    if (raw) { auth = JSON.parse(raw); }
+    const rawOrg = localStorage.getItem('k2l_org_v1');
+    if (rawOrg) { org = JSON.parse(rawOrg); }
+  } catch (e) { /* ignore */ }
+}
+function saveAuthToStorage() {
+  try {
+    localStorage.setItem('k2l_auth_v1', JSON.stringify(auth));
+    localStorage.setItem('k2l_org_v1', JSON.stringify(org));
+  } catch (e) { /* ignore */ }
+}
+function clearAuthStorage() {
+  try { localStorage.removeItem('k2l_auth_v1'); localStorage.removeItem('k2l_org_v1'); } catch (e) {}
+}
+
+function authHeaders() {
+  return {
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': 'Bearer ' + (auth.accessToken || SUPABASE_ANON_KEY),
+    'Content-Type': 'application/json',
+  };
+}
+
+async function authFetch(url, options) {
+  options = options || {};
+  const mergedHeaders = { ...authHeaders(), ...(options.headers || {}) };
+  let res = await fetch(url, { ...options, headers: mergedHeaders });
+  if (res.status === 401 && auth.refreshToken) {
+    const refreshed = await Auth.refresh();
+    if (refreshed) {
+      const retryHeaders = { ...authHeaders(), ...(options.headers || {}) };
+      res = await fetch(url, { ...options, headers: retryHeaders });
+    }
+  }
+  return res;
+}
+
+const Auth = {
+  async signup(email, password) {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.msg || body.error_description || 'Sign up failed');
+    return body;
+  },
+  async login(email, password) {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.msg || body.error_description || 'Login failed');
+    auth = { accessToken: body.access_token, refreshToken: body.refresh_token, userId: body.user.id, email: body.user.email };
+    saveAuthToStorage();
+    return body;
+  },
+  async refresh() {
+    if (!auth.refreshToken) return false;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: auth.refreshToken }),
+      });
+      const body = await res.json();
+      if (!res.ok) return false;
+      auth = { accessToken: body.access_token, refreshToken: body.refresh_token, userId: body.user.id, email: body.user.email };
+      saveAuthToStorage();
+      return true;
+    } catch (e) { return false; }
+  },
+  logout() {
+    auth = { accessToken: null, refreshToken: null, userId: null, email: null };
+    org = { id: null, name: null, logo: null };
+    clearAuthStorage();
+  },
+  async getMyOrg() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/k2l_org_members?select=org_id,role,k2l_organizations(id,name,logo_data_url)&user_id=eq.${auth.userId}`, { headers: authHeaders() });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    if (!rows.length) return null;
+    const o = rows[0].k2l_organizations;
+    return { id: o.id, name: o.name, logo: o.logo_data_url };
+  },
+  async createOrg(name) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/k2l_organizations`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+      body: JSON.stringify([{ name }]),
+    });
+    const rows = await res.json();
+    if (!res.ok) throw new Error(rows.message || 'Could not create organization');
+    const newOrg = rows[0];
+    const memRes = await fetch(`${SUPABASE_URL}/rest/v1/k2l_org_members`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify([{ org_id: newOrg.id, user_id: auth.userId, role: 'owner' }]),
+    });
+    if (!memRes.ok) throw new Error('Could not link organization membership');
+    org = { id: newOrg.id, name: newOrg.name, logo: newOrg.logo_data_url };
+    saveAuthToStorage();
+    return org;
+  },
+  async updateOrg(fields) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/k2l_organizations?id=eq.${org.id}`, {
+      method: 'PATCH',
+      headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+      body: JSON.stringify(fields),
+    });
+    const rows = await res.json();
+    if (!res.ok) throw new Error('Could not update organization');
+    org = { id: rows[0].id, name: rows[0].name, logo: rows[0].logo_data_url };
+    saveAuthToStorage();
+    return org;
+  },
+};
+
 
 const RemoteStore = {
   available: true,
   async listSessions() {
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=session_id,delegate_name,course_name,updated_at&order=updated_at.desc`, { headers: SB_HEADERS });
+      const res = await authFetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=session_id,delegate_name,course_name,updated_at&org_id=eq.${org.id}&order=updated_at.desc`);
       if (!res.ok) throw new Error('list failed: ' + res.status);
       const rows = await res.json();
       RemoteStore.available = true;
@@ -1089,7 +1218,7 @@ const RemoteStore = {
   },
   async getSession(sessionId) {
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?session_id=eq.${encodeURIComponent(sessionId)}&select=data`, { headers: SB_HEADERS });
+      const res = await authFetch(`${SUPABASE_URL}/rest/v1/${TABLE}?session_id=eq.${encodeURIComponent(sessionId)}&select=data`);
       if (!res.ok) throw new Error('get failed: ' + res.status);
       const rows = await res.json();
       RemoteStore.available = true;
@@ -1098,10 +1227,10 @@ const RemoteStore = {
   },
   async saveSession(sessionId, delegateName, courseName, dataObj) {
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
+      const res = await authFetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
         method: 'POST',
-        headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-        body: JSON.stringify([{ session_id: sessionId, delegate_name: delegateName || 'Unnamed delegate', course_name: courseName || '', data: dataObj, updated_at: new Date().toISOString() }]),
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify([{ session_id: sessionId, org_id: org.id, delegate_name: delegateName || 'Unnamed delegate', course_name: courseName || '', data: dataObj, updated_at: new Date().toISOString() }]),
       });
       if (!res.ok) throw new Error('save failed: ' + res.status);
       RemoteStore.available = true;
@@ -1110,7 +1239,7 @@ const RemoteStore = {
   },
   async deleteSession(sessionId) {
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?session_id=eq.${encodeURIComponent(sessionId)}`, { method: 'DELETE', headers: SB_HEADERS });
+      const res = await authFetch(`${SUPABASE_URL}/rest/v1/${TABLE}?session_id=eq.${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
       return res.ok;
     } catch (e) { console.error(e); return false; }
   },
@@ -1120,6 +1249,12 @@ let sessionId = null;
 let data = {};
 let step = 0;
 let hubOpen = false;
+let authMode = 'login'; // 'login' | 'signup'
+let authError = null;
+let authBusy = false;
+let signupJustSent = false;
+let onboardingBusy = false;
+let onboardingError = null;
 let hubForm = null;
 let saveTimer = null;
 let saveFlashTimer = null;
@@ -1309,6 +1444,48 @@ function navButtons(opts) {
   </div>`;
 }
 
+function renderAuthScreen() {
+  return `
+    <div class="card">
+      <div class="hero-wordmark">KEANE2LEARN</div>
+      <div class="hero-tagline">DRIVING ASSESSMENT</div>
+      <h1>${authMode === 'login' ? 'Log in' : 'Create your account'}</h1>
+      <p class="subtitle">${authMode === 'login' ? 'Log in to access your saved sessions.' : 'Set up an account for your company to start using Keane2Learn Driving Assessment.'}</p>
+      ${signupJustSent ? `
+        <p class="note" style="color:var(--green);font-weight:600;">Check your email for a confirmation link, then log in below.</p>
+      ` : ''}
+      ${authError ? `<p class="note warn">${escapeHtml(authError)}</p>` : ''}
+      <label class="f-label">Email</label>
+      <input class="f-input" type="email" id="authEmail" placeholder="you@company.com" />
+      <label class="f-label">Password</label>
+      <input class="f-input" type="password" id="authPassword" placeholder="At least 6 characters" />
+      <button class="btn-primary btn-full" id="btnAuthSubmit" style="margin-top:14px;" ${authBusy ? 'disabled' : ''}>
+        ${authBusy ? 'Please wait…' : (authMode === 'login' ? 'Log in' : 'Sign up')}
+      </button>
+      <button class="btn-secondary btn-full" id="btnAuthSwitch">
+        ${authMode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Log in'}
+      </button>
+    </div>
+  `;
+}
+
+function renderOnboardingScreen() {
+  return `
+    <div class="card">
+      <div class="hero-wordmark">KEANE2LEARN</div>
+      <div class="hero-tagline">DRIVING ASSESSMENT</div>
+      <h1>Set up your company</h1>
+      <p class="subtitle">One last step — name your organization. You can add a logo later from Account & Branding.</p>
+      ${onboardingError ? `<p class="note warn">${escapeHtml(onboardingError)}</p>` : ''}
+      <label class="f-label">Company / trading name</label>
+      <input class="f-input" type="text" id="onboardingOrgName" placeholder="e.g. Smith Driver Training" />
+      <button class="btn-primary btn-full" id="btnCreateOrg" style="margin-top:14px;" ${onboardingBusy ? 'disabled' : ''}>
+        ${onboardingBusy ? 'Setting up…' : 'Continue'}
+      </button>
+    </div>
+  `;
+}
+
 function timeAgo(ts) {
   const mins = Math.round((Date.now() - ts) / 60000);
   if (mins < 1) return 'just now';
@@ -1473,6 +1650,11 @@ function render() {
   let html = '';
 
   if (s === 'home') {
+    if (!auth.accessToken) {
+      html = renderAuthScreen();
+    } else if (!org.id) {
+      html = renderOnboardingScreen();
+    } else {
     if (cachedSessions === null && !sessionsLoading) {
       sessionsLoading = true;
       RemoteStore.listSessions().then(rows => {
@@ -1486,10 +1668,11 @@ function render() {
       <div class="card">
         <div class="hero-wordmark">KEANE2LEARN</div>
         <div class="hero-tagline">DRIVING ASSESSMENT</div>
-        <h1>Session Forms</h1>
+        <h1>${escapeHtml(org.name || 'Session Forms')}</h1>
         <p class="subtitle">Complete the Driving Assessment Report, Licence & Compliance Record, and Delegate Feedback Form on your phone, then export completed PDFs.</p>
-        <p class="note">Sessions save to a permanent record as you go — pick up any session from any device, any time.</p>
+        <p class="note">Signed in as ${escapeHtml(auth.email)} · <button class="link-btn" id="btnLogout" style="padding:0;font-size:12.5px;">Log out</button></p>
         <button class="btn-primary btn-full" id="btnNewSession">+ Start new session</button>
+        <button class="btn-secondary btn-full" id="btnAccountSettings">Account & branding</button>
       </div>
       <div class="card">
         <h2>Saved sessions</h2>
@@ -1508,6 +1691,7 @@ function render() {
         `).join('') : (sessionsLoading ? '' : '<p class="note">No saved sessions yet.</p>')}
       </div>
     `;
+    }
   } else if (s === 'session') {
     html = `
       <div class="card">
@@ -1631,6 +1815,22 @@ function render() {
       </div>
       ${navButtons({ hideNext: true })}
     `;
+  } else if (s === 'account') {
+    html = `
+      <div class="card">
+        <h2>Account & Branding</h2>
+        <p class="note">Signed in as ${escapeHtml(auth.email)}</p>
+        <label class="f-label">Company / trading name</label>
+        <input class="f-input" type="text" id="orgNameInput" value="${escapeHtml(org.name || '')}" />
+        <label class="f-label">Logo</label>
+        <input type="file" accept="image/*" id="orgLogoInput" />
+        ${org.logo ? `<img src="${org.logo}" style="max-height:48px;margin-top:10px;display:block;" />` : '<p class="note">No logo uploaded yet.</p>'}
+        <button class="btn-primary btn-full" id="btnSaveOrg" style="margin-top:16px;">Save changes</button>
+      </div>
+      <div class="card">
+        <button class="btn-secondary btn-full" id="btnBackToHome">← Back to sessions</button>
+      </div>
+    `;
   }
 
   app.innerHTML = `${topBar()}${sharedSummaryBar()}${progressBar()}${html}`;
@@ -1639,6 +1839,79 @@ function render() {
 }
 
 function attachHandlers() {
+  // Auth screen handlers
+  const btnAuthSubmit = document.getElementById('btnAuthSubmit');
+  if (btnAuthSubmit) btnAuthSubmit.addEventListener('click', async () => {
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    if (!email || !password) { authError = 'Enter both email and password.'; render(); return; }
+    authBusy = true; authError = null; render();
+    try {
+      if (authMode === 'signup') {
+        await Auth.signup(email, password);
+        signupJustSent = true;
+        authMode = 'login';
+      } else {
+        await Auth.login(email, password);
+        const myOrg = await Auth.getMyOrg();
+        if (myOrg) { org = myOrg; saveAuthToStorage(); }
+        signupJustSent = false;
+      }
+    } catch (e) {
+      authError = e.message || 'Something went wrong.';
+    }
+    authBusy = false;
+    render();
+  });
+  const btnAuthSwitch = document.getElementById('btnAuthSwitch');
+  if (btnAuthSwitch) btnAuthSwitch.addEventListener('click', () => {
+    authMode = authMode === 'login' ? 'signup' : 'login';
+    authError = null; signupJustSent = false;
+    render();
+  });
+  const btnCreateOrg = document.getElementById('btnCreateOrg');
+  if (btnCreateOrg) btnCreateOrg.addEventListener('click', async () => {
+    const name = document.getElementById('onboardingOrgName').value.trim();
+    if (!name) { onboardingError = 'Enter a company name.'; render(); return; }
+    onboardingBusy = true; onboardingError = null; render();
+    try {
+      await Auth.createOrg(name);
+      cachedSessions = null;
+    } catch (e) {
+      onboardingError = e.message || 'Could not set up your organization.';
+    }
+    onboardingBusy = false;
+    render();
+  });
+  const btnLogout = document.getElementById('btnLogout');
+  if (btnLogout) btnLogout.addEventListener('click', () => {
+    Auth.logout();
+    cachedSessions = null; sessionId = null; data = {};
+    render();
+  });
+  const btnAccountSettings = document.getElementById('btnAccountSettings');
+  if (btnAccountSettings) btnAccountSettings.addEventListener('click', () => goToStep('account'));
+  const btnBackToHome = document.getElementById('btnBackToHome');
+  if (btnBackToHome) btnBackToHome.addEventListener('click', goHome);
+  const btnSaveOrg = document.getElementById('btnSaveOrg');
+  if (btnSaveOrg) btnSaveOrg.addEventListener('click', async () => {
+    const name = document.getElementById('orgNameInput').value.trim();
+    const fileInput = document.getElementById('orgLogoInput');
+    const fields = { name };
+    async function finishSave() {
+      btnSaveOrg.disabled = true; btnSaveOrg.textContent = 'Saving…';
+      try { await Auth.updateOrg(fields); render(); }
+      catch (e) { alert('Could not save changes.'); }
+    }
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      const reader = new FileReader();
+      reader.onload = () => { fields.logo_data_url = reader.result; finishSave(); };
+      reader.readAsDataURL(fileInput.files[0]);
+    } else {
+      finishSave();
+    }
+  });
+
   document.querySelectorAll('[data-key]').forEach(el => el.addEventListener('input', e => { data[e.target.dataset.key] = e.target.value; scheduleSave(); }));
   document.querySelectorAll('[data-score-comment]').forEach(el => el.addEventListener('input', e => {
     const k = e.target.dataset.scoreComment;
@@ -1702,6 +1975,7 @@ function attachHandlers() {
   }));
 }
 
+loadAuthFromStorage();
 render();
 
 </script>
