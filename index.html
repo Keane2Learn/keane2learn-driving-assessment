@@ -1177,19 +1177,13 @@ const Auth = {
   },
   async createOrg(name) {
     if (!auth.accessToken) throw new Error('Not logged in — please log in again.');
-    const res = await authFetch(`${SUPABASE_URL}/rest/v1/k2l_organizations`, {
+    const res = await authFetch(`${SUPABASE_URL}/rest/v1/rpc/create_organization`, {
       method: 'POST',
-      headers: { 'Prefer': 'return=representation' },
-      body: JSON.stringify([{ name }]),
+      body: JSON.stringify({ org_name: name }),
     });
-    const rows = await res.json();
-    if (!res.ok) throw new Error(rows?.message ? `Could not create organization (${rows.message})` : 'Could not create organization — try logging out and back in.');
-    const newOrg = rows[0];
-    const memRes = await authFetch(`${SUPABASE_URL}/rest/v1/k2l_org_members`, {
-      method: 'POST',
-      body: JSON.stringify([{ org_id: newOrg.id, user_id: auth.userId, role: 'owner' }]),
-    });
-    if (!memRes.ok) throw new Error('Could not link organization membership');
+    const body = await res.json();
+    if (!res.ok) throw new Error(body?.message ? `Could not create organization (${body.message})` : 'Could not create organization — try logging out and back in.');
+    const newOrg = Array.isArray(body) ? body[0] : body;
     org = { id: newOrg.id, name: newOrg.name, logo: newOrg.logo_data_url, planStatus: newOrg.plan_status };
     saveAuthToStorage();
     return org;
