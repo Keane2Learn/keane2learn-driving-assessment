@@ -62,6 +62,7 @@ create table if not exists reviews (
   outcome text check (outcome in ('pass', 'fail')),
   reviewer_role text check (reviewer_role in ('pupil', 'instructor')),
   comment text check (char_length(comment) <= 1000),
+  route_notes text check (char_length(route_notes) <= 500),
   is_approved boolean not null default false,
   created_at timestamptz not null default now()
 );

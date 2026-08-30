@@ -187,7 +187,7 @@ async function loadAll() {
     const [c, p, r] = await Promise.all([
       sbGet('test_centres?select=id,name,town,county,region,postcode&order=name.asc'),
       sbGet('pass_rate_stats?select=centre_id,period_label,tests_conducted,tests_passed,first_attempt_tests,first_attempt_passes,automatic_tests,automatic_passes&order=period_label.desc'),
-      sbGet('reviews?select=centre_id,rating,outcome,reviewer_role,comment,created_at&is_approved=eq.true&order=created_at.desc'),
+      sbGet('reviews?select=centre_id,rating,outcome,reviewer_role,comment,route_notes,created_at&is_approved=eq.true&order=created_at.desc'),
     ]);
     centres = c;
     passRates = {}; p.forEach(row => (passRates[row.centre_id] = passRates[row.centre_id] || []).push(row));
@@ -539,6 +539,20 @@ function renderDetail(id) {
   const mapsQuery = encodeURIComponent(`${c.name} Driving Test Centre, ${c.town}, UK`);
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
 
+  const routeNotes = list.filter(r => r.route_notes);
+  const routeBlock = routeNotes.length ? `
+    <div class="section">
+      <h3>Known routes &amp; local areas</h3>
+      <p class="muted">DVSA stopped publishing official test routes back in 2010, specifically so the test can't be memorised — so there's no official list. What's below is just what real candidates who tested here recently chose to share.</p>
+      ${routeNotes.map(r => `
+        <div class="review">
+          <div class="review-head"><span>${timeAgo(r.created_at)}</span></div>
+          <div>${esc(r.route_notes)}</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
   return `
     <a class="backlink" id="back">← All test centres</a>
     <h2>${esc(c.name)}</h2>
@@ -551,6 +565,7 @@ function renderDetail(id) {
 
     ${waitBlock(id)}
     ${ageBlock(id)}
+    ${routeBlock}
 
     <div class="section">
       <div class="card-row">
@@ -594,6 +609,8 @@ function renderDetail(id) {
         </div>
         <label>Comments (no names, please — this is anonymous)</label>
         <textarea name="comment" maxlength="1000" placeholder="e.g. Quiet test routes, plenty of roundabout practice, examiner was friendly and put me at ease."></textarea>
+        <label>Roads or areas you were taken on (optional)</label>
+        <textarea name="routeNotes" maxlength="500" placeholder="e.g. Out via the A414 roundabout, reverse bay park at the retail park, back through the town centre one-way system."></textarea>
         <button class="primary" type="submit">Submit review</button>
         <p class="note">Reviews are checked before they appear publicly. Please don't include anyone's name — the point of this page is to describe the centre and the experience, not to identify an individual examiner.</p>
       </form>
@@ -639,6 +656,7 @@ function attachHandlers() {
     const fd = new FormData(form);
     if (fd.get('website')) return; // honeypot tripped — silently drop
     const comment = (fd.get('comment') || '').trim();
+    const routeNotes = (fd.get('routeNotes') || '').trim();
     const btn = form.querySelector('button');
     btn.disabled = true; btn.textContent = 'Submitting…';
     try {
@@ -648,6 +666,7 @@ function attachHandlers() {
         outcome: fd.get('outcome') || null,
         reviewer_role: fd.get('role') || null,
         comment: comment || null,
+        route_notes: routeNotes || null,
         is_approved: false,
       });
       form.reset();
