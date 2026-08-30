@@ -89,12 +89,15 @@ const SUPABASE_ANON_KEY = 'sb_publishable_oyl-uBQ5cqAIyoLc0J1A5A_qovyRDCw';
    State
    ------------------------------------------------------------ */
 let centres = [];
-let passRates = {};   // centre_id -> [{period_label, tests_conducted, tests_passed}, ...]
+let passRates = {};   // centre_id -> [{period_label, tests_conducted, tests_passed, first_attempt_tests, first_attempt_passes}, ...]
+let ageRates = {};    // centre_id -> { age: {tests_conducted, tests_passed} }
 let reviews = {};     // centre_id -> [{rating, outcome, reviewer_role, comment, created_at}, ...]
 let view = 'list';
 let selectedId = null;
 let search = '';
 let regionFilter = '';
+let ageFilter = '';   // '' = all ages, else '17'..'25'
+let sortBy = 'pass_desc'; // pass_desc | pass_asc | first_time_desc | name_asc
 let loaded = false;
 
 /* ------------------------------------------------------------
@@ -134,6 +137,13 @@ async function loadAll() {
     centres = c;
     passRates = {}; p.forEach(row => (passRates[row.centre_id] = passRates[row.centre_id] || []).push(row));
     reviews = {}; r.forEach(row => (reviews[row.centre_id] = reviews[row.centre_id] || []).push(row));
+    // Age breakdown is a newer, optional table — don't fail the whole app
+    // if the migration for it hasn't been run yet.
+    ageRates = {};
+    try {
+      const a = await sbGet('age_pass_rates?select=centre_id,age,tests_conducted,tests_passed');
+      a.forEach(row => { (ageRates[row.centre_id] = ageRates[row.centre_id] || {})[row.age] = row; });
+    } catch (e) { console.warn('age_pass_rates not available yet', e); }
     loaded = true;
   } catch (e) {
     console.error(e);
@@ -151,6 +161,31 @@ function latestPassRate(centreId) {
   const r = rows[0];
   if (!r.tests_conducted) return null;
   return { pct: Math.round((r.tests_passed / r.tests_conducted) * 1000) / 10, period: r.period_label, conducted: r.tests_conducted, passed: r.tests_passed };
+}
+
+function firstTimePassRate(centreId) {
+  const rows = passRates[centreId];
+  if (!rows || !rows.length || !rows[0].first_attempt_tests) return null;
+  const r = rows[0];
+  return { pct: Math.round((r.first_attempt_passes / r.first_attempt_tests) * 1000) / 10, tests: r.first_attempt_tests };
+}
+
+function agePassRate(centreId, age) {
+  const row = ageRates[centreId] && ageRates[centreId][age];
+  if (!row || !row.tests_conducted) return null;
+  return { pct: Math.round((row.tests_passed / row.tests_conducted) * 1000) / 10, tests: row.tests_conducted };
+}
+
+// The rate actually shown/sorted-on for a centre, honouring the age filter
+// (falls back to the overall rate if that centre has no data for the
+// selected age, so the list doesn't just drop it).
+function effectivePassRate(centreId) {
+  if (ageFilter) {
+    const r = agePassRate(centreId, Number(ageFilter));
+    if (r) return Object.assign({ isAgeSpecific: true }, r);
+  }
+  const r = latestPassRate(centreId);
+  return r ? Object.assign({ isAgeSpecific: false }, r) : null;
 }
 
 function rateClass(pct) {
@@ -228,22 +263,30 @@ function renderList() {
     (!regionFilter || c.region === regionFilter)
   );
   list = list.slice().sort((a, b) => {
-    const ra = latestPassRate(a.id), rb = latestPassRate(b.id);
-    if (ra && rb) return rb.pct - ra.pct;
+    if (sortBy === 'name_asc') return a.name.localeCompare(b.name);
+    if (sortBy === 'first_time_desc') {
+      const fa = firstTimePassRate(a.id), fb = firstTimePassRate(b.id);
+      if (fa && fb) return fb.pct - fa.pct;
+      if (fa) return -1; if (fb) return 1;
+      return a.name.localeCompare(b.name);
+    }
+    const ra = effectivePassRate(a.id), rb = effectivePassRate(b.id);
+    if (ra && rb) return sortBy === 'pass_asc' ? ra.pct - rb.pct : rb.pct - ra.pct;
     if (ra) return -1; if (rb) return 1;
     return a.name.localeCompare(b.name);
   });
 
   const cards = list.map(c => {
-    const r = latestPassRate(c.id);
+    const r = effectivePassRate(c.id);
     const sum = reviewSummary(c.id);
+    const badge = r ? `${r.pct}% pass${r.isAgeSpecific ? ' (age ' + ageFilter + ')' : ''}` : 'No data yet';
     return `<div class="card" data-id="${c.id}">
       <div class="card-row">
         <div>
           <div class="centre-name">${esc(c.name)}</div>
           <div class="centre-sub">${esc(c.town)}${c.county ? ', ' + esc(c.county) : ''}${sum ? ' · ' + sum.count + ' review' + (sum.count === 1 ? '' : 's') : ''}</div>
         </div>
-        <span class="pill ${rateClass(r ? r.pct : null)}">${r ? r.pct + '% pass' : 'No data yet'}</span>
+        <span class="pill ${rateClass(r ? r.pct : null)}">${badge}</span>
       </div>
     </div>`;
   }).join('') || `<div class="empty">No test centres match that search.</div>`;
@@ -251,13 +294,43 @@ function renderList() {
   return `
     <div class="searchbar">
       <input type="text" id="search" placeholder="Search by centre or town…" value="${esc(search)}">
-      <select id="region">
+    </div>
+    <div class="searchbar">
+      <select id="sort">
+        <option value="pass_desc" ${sortBy === 'pass_desc' ? 'selected' : ''}>Pass rate: high to low</option>
+        <option value="pass_asc" ${sortBy === 'pass_asc' ? 'selected' : ''}>Pass rate: low to high</option>
+        <option value="first_time_desc" ${sortBy === 'first_time_desc' ? 'selected' : ''}>First-time pass rate</option>
+        <option value="name_asc" ${sortBy === 'name_asc' ? 'selected' : ''}>Name A–Z</option>
+      </select>
+      <select id="age">
+        <option value="">All ages</option>
+        ${[17,18,19,20,21,22,23,24,25].map(a => `<option value="${a}" ${String(a) === ageFilter ? 'selected' : ''}>Age ${a}</option>`).join('')}
+      </select>
+      ${regions.length ? `<select id="region">
         <option value="">All regions</option>
         ${regions.map(r => `<option value="${esc(r)}" ${r === regionFilter ? 'selected' : ''}>${esc(r)}</option>`).join('')}
-      </select>
+      </select>` : ''}
     </div>
     ${cards}
-    <p class="note">Pass rates: DVSA official statistics (DRT122A), Open Government Licence v3.0. Reviews are submitted anonymously by candidates and instructors, and are moderated before publishing.</p>
+    <p class="note">Pass rates: DVSA official statistics (DRT122A/C/D), Open Government Licence v3.0. Reviews are submitted anonymously by candidates and instructors, and are moderated before publishing.</p>
+  `;
+}
+
+function ageBlock(centreId) {
+  const rows = ageRates[centreId];
+  if (!rows) return '';
+  const chips = [17,18,19,20,21,22,23,24,25]
+    .map(age => ({ age, r: agePassRate(centreId, age) }))
+    .filter(x => x.r)
+    .map(x => `<span class="tag">Age ${x.age}: ${x.r.pct}% <span class="muted">(${x.r.tests.toLocaleString()} tests)</span></span>`)
+    .join('');
+  if (!chips) return '';
+  return `
+    <div class="section">
+      <h3>Pass rate by age (17–25)</h3>
+      <div class="tags">${chips}</div>
+      <p class="note">DVSA breaks this out for younger candidates only; older age bands aren't published per centre.</p>
+    </div>
   `;
 }
 
@@ -312,6 +385,8 @@ function renderDetail(id) {
       <h3>Pass rate</h3>
       <div class="stat-grid">${statBoxes}</div>
     </div>
+
+    ${ageBlock(id)}
 
     <div class="section">
       <h3>What candidates say</h3>
@@ -378,6 +453,10 @@ function attachHandlers() {
   if (s) s.addEventListener('input', e => { search = e.target.value; render(); document.getElementById('search').focus(); document.getElementById('search').setSelectionRange(search.length, search.length); });
   const rg = document.getElementById('region');
   if (rg) rg.addEventListener('change', e => { regionFilter = e.target.value; render(); });
+  const ageSel = document.getElementById('age');
+  if (ageSel) ageSel.addEventListener('change', e => { ageFilter = e.target.value; render(); });
+  const sortSel = document.getElementById('sort');
+  if (sortSel) sortSel.addEventListener('change', e => { sortBy = e.target.value; render(); });
 
   const form = document.getElementById('reviewForm');
   if (form) form.addEventListener('submit', async e => {

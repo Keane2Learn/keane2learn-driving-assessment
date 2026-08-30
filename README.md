@@ -30,15 +30,27 @@ tier. No server to run, no build step.
 ## 2. Load test centres and pass rates
 
 `import_real_data.sql` has the real thing: 318 UK car test centres with
-official 2024–25 pass rates, built from DVSA's own published DRT122A
-(overall pass rate) and DRT122C (first-attempt pass rate) releases —
+official 2024–25 data, built from three DVSA releases —
 [gov.uk/government/statistics/driving-test-statistics](https://www.gov.uk/government/statistics/driving-test-statistics),
-Open Government Licence v3.0. Paste its contents into the Supabase SQL
-Editor and run it — it migrates the schema (adds the first-attempt columns)
-and replaces whatever's in `test_centres`/`pass_rate_stats` with the real
-data in one go. `seed_centres.csv` (a placeholder ~45-centre starter list,
-no pass rates) is superseded by this and only useful if you want a smaller
+Open Government Licence v3.0:
+
+- **DRT122A** — overall pass rate per centre
+- **DRT122C** — first-attempt pass rate + zero-fault passes per centre
+- **DRT122D** — pass rate by age (17–25) per centre
+
+Paste the file's contents into the Supabase SQL Editor and run it — it
+migrates the schema (adds the first-attempt and age-breakdown tables) and
+replaces whatever's in `test_centres`/`pass_rate_stats` with the real data
+in one go. `seed_centres.csv` (a placeholder ~45-centre starter list, no
+pass rates) is superseded by this and only useful if you want a smaller
 sample.
+
+The site lets visitors sort by overall or first-time pass rate, filter to a
+specific age band (17–25) — which re-sorts the list by that age's rate
+where a centre has it — and each centre's page shows an age-by-age
+breakdown when DVSA published one for it. The region filter only appears
+once centres have a `region` value set — DVSA's files don't include one, so
+it's empty until you backfill it yourself (e.g. from postcode) or drop it.
 
 DVSA republishes both files every autumn — download the new ones, send them
 to Claude, and it'll regenerate `import_real_data.sql` for the new year.

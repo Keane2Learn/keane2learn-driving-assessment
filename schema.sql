@@ -30,6 +30,17 @@ create table if not exists pass_rate_stats (
 -- nullable: a handful of very-low-volume centres only appear in one of
 -- DVSA's two source files (DRT122A / DRT122C), not both.
 
+create table if not exists age_pass_rates (
+  id uuid primary key default gen_random_uuid(),
+  centre_id uuid not null references test_centres(id) on delete cascade,
+  period_label text not null,
+  age integer not null check (age between 17 and 25),
+  tests_conducted integer not null check (tests_conducted >= 0),
+  tests_passed integer not null check (tests_passed >= 0),
+  unique (centre_id, period_label, age)
+);
+-- DVSA (DRT122D) only publishes a per-centre age breakdown for 17-25 year olds.
+
 create table if not exists reviews (
   id uuid primary key default gen_random_uuid(),
   centre_id uuid not null references test_centres(id) on delete cascade,
@@ -42,16 +53,19 @@ create table if not exists reviews (
 );
 
 create index if not exists idx_pass_rate_stats_centre on pass_rate_stats(centre_id);
+create index if not exists idx_age_pass_rates_centre on age_pass_rates(centre_id);
 create index if not exists idx_reviews_centre on reviews(centre_id);
 create index if not exists idx_reviews_approved on reviews(centre_id, is_approved);
 
 alter table test_centres enable row level security;
 alter table pass_rate_stats enable row level security;
+alter table age_pass_rates enable row level security;
 alter table reviews enable row level security;
 
 -- Anyone (anon key) can read centres and pass-rate stats.
 create policy "public read test_centres" on test_centres for select using (true);
 create policy "public read pass_rate_stats" on pass_rate_stats for select using (true);
+create policy "public read age_pass_rates" on age_pass_rates for select using (true);
 
 -- Anyone can read reviews, but only once approved by you.
 create policy "public read approved reviews" on reviews for select using (is_approved = true);
