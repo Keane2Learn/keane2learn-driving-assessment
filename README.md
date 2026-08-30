@@ -27,61 +27,63 @@ tier. No server to run, no build step.
    The anon key is safe to ship in client-side code — it's designed to be
    public, and row-level security is what actually protects the data.
 
-## 2. Load test centres and pass rates
+## 2. Load test centres, pass rates and waiting times
 
-`import_real_data.sql` has the real thing: 318 UK car test centres with
-official 2024–25 data, built from three DVSA releases —
+The site has two top-level sections, chosen from a home screen: **Practical
+test** (the full per-centre experience) and **Theory test** (a national-only
+overview — see below for why). `import_real_data.sql` covers the practical
+side: 323 UK car test centres built from five DVSA releases —
 [gov.uk/government/statistics/driving-test-statistics](https://www.gov.uk/government/statistics/driving-test-statistics),
 Open Government Licence v3.0:
 
-- **DRT122A** — overall pass rate per centre
+- **DRT122A** — overall pass rate per centre (2024–25)
 - **DRT122C** — first-attempt pass rate + zero-fault passes per centre
 - **DRT122D** — pass rate by age (17–25) per centre
 - **DRT122E** — automatic-gearbox pass rate per centre
+- **DRT122F** — median waiting time and slot availability per centre
+  (latest available month), and each centre's **region** — which is also
+  what feeds the region filter, so it only has options once this file's
+  been imported
 
-Worth grabbing next if you want it: **DRT122F** ("Car driving test waiting
-times and availability by driving test centre") — DVSA publishes this
-monthly and it's arguably the single most-asked practical question
-("which centre near me has the shortest wait"). Not in the app yet since
-you haven't sent that file — everything below is national/regional, not
-per-centre.
-
-### National context panel
-
-Five more files (DRT121A, DRT121D, DRT121E, DRT111C, DRT121G) went into a
-collapsible "National picture" card at the top of the list — GB-wide pass
-rate, first-time pass rate, zero-fault share, theory test pass rate,
-pass rate by attempt number, and median test-booking wait by region.
-These aren't tied to any single test centre, so — unlike everything
-else — they're **not** in Supabase; they're hardcoded as `NATIONAL_STATS`
-near the top of `index.html`'s script, since they're ~15 numbers that
-change once a year, not something worth a database table and RLS policies
-for. To refresh them next year: download the same five files from
-gov.uk, send them to Claude, and ask it to regenerate that object.
-
-One file was explicitly left out: **DRT111C is theory test data** — a
-different exam, at a different set of locations, run by a different part
-of DVSA. It only shows up here as one national headline number (the
-overall theory pass rate) for context; this app doesn't attempt a
-theory-test section, since the whole product is built around reviewing
-and comparing *practical* test centres.
-
-Paste the file's contents into the Supabase SQL Editor and run it — it
-migrates the schema (adds the first-attempt and age-breakdown tables) and
-replaces whatever's in `test_centres`/`pass_rate_stats` with the real data
-in one go. `seed_centres.csv` (a placeholder ~45-centre starter list, no
-pass rates) is superseded by this and only useful if you want a smaller
-sample.
+Paste `import_real_data.sql`'s contents into the Supabase SQL Editor and
+run it — it migrates the schema (adds the first-attempt, age-breakdown and
+waiting-time tables/columns) and replaces whatever's in
+`test_centres`/`pass_rate_stats` with the real data in one go.
+`seed_centres.csv` (a placeholder ~45-centre starter list, no pass rates)
+is fully superseded and only useful if you want a smaller sample.
+A handful of centre names don't match cleanly across DVSA's own files
+(different qualifiers in different releases, e.g. "Leeds" vs. "Leeds
+(Colton Mill)") — rather than guess at a merge, those stayed as separate
+rows; the SQL file's header comment lists them.
 
 The site lets visitors sort by overall or first-time pass rate, filter to a
 specific age band (17–25) — which re-sorts the list by that age's rate
-where a centre has it — and each centre's page shows an age-by-age
-breakdown when DVSA published one for it. The region filter only appears
-once centres have a `region` value set — DVSA's files don't include one, so
-it's empty until you backfill it yourself (e.g. from postcode) or drop it.
+where a centre has it — and each centre's page shows pass rate, an
+age-by-age breakdown, and (where available) median wait time and booking
+availability as of the latest DRT122F month.
 
-DVSA republishes both files every autumn — download the new ones, send them
-to Claude, and it'll regenerate `import_real_data.sql` for the new year.
+DVSA republishes these every autumn (waiting times monthly) — download the
+new files, send them to Claude, and it'll regenerate `import_real_data.sql`.
+
+### National context panel + theory test section
+
+Five more files (DRT121A, DRT121D, DRT121E, DRT111C, DRT121G) are GB-wide
+or regional, not per-centre, so they don't fit the practical-test schema —
+they became a collapsible "National picture" card at the top of the
+practical list (GB pass rate, first-time pass rate, zero-fault share,
+pass rate by attempt number, median wait by region) and the **Theory
+test** home-screen option (national pass rate + year-by-year trend from
+DRT111C). None of this is in Supabase; it's hardcoded as `NATIONAL_STATS`
+and `THEORY_HISTORY` near the top of `index.html`'s script, since it's a
+couple dozen numbers that change once a year, not something worth a
+database table and RLS policies for. To refresh next year: download the
+same files, send them to Claude, and ask it to regenerate those objects.
+
+Theory test only gets a national trend, deliberately not a per-centre
+list: it's a standardised computer-based test at shared venues, not
+examiner-led, and DVSA doesn't publish (and there's no real reason to
+expect) meaningful per-venue variation the way there is for the practical
+test.
 
 ## 3. Moderate reviews
 

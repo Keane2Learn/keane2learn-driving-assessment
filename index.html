@@ -37,6 +37,12 @@
   .pill.rate-mid{background:var(--accent-soft);color:var(--accent)}
   .pill.none{background:var(--surface-2);color:var(--ink-faint)}
   .backlink{display:inline-block;margin-bottom:12px;color:var(--accent);text-decoration:none;cursor:pointer}
+  .home-hero{padding:24px 0 6px}
+  .home-hero h2{margin:0 0 4px}
+  .home-choice{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:14px;cursor:pointer}
+  .home-choice:hover{border-color:var(--accent)}
+  .home-choice-title{font-size:1.15rem;font-weight:600;margin-bottom:6px}
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;padding:4px 12px}
   h2{margin:0 0 2px}
   .muted{color:var(--ink-muted)}
   .section{margin:22px 0}
@@ -115,13 +121,32 @@ const NATIONAL_STATS = {
   ].sort((a, b) => a[1] - b[1]),
 };
 
+// DRT111C: GB theory test conducted/passed/pass-rate by financial year.
+// Theory tests happen at different locations from practical tests and
+// DVSA doesn't publish a per-centre breakdown for them, so this stays a
+// national trend rather than a browsable list like the practical side.
+const THEORY_HISTORY = [
+  ['2007 to 2008', 1451348, 949431, 65.4], ['2008 to 2009', 1290638, 844036, 65.4],
+  ['2009 to 2010', 1347486, 859813, 63.8], ['2010 to 2011', 1346165, 849007, 63.1],
+  ['2011 to 2012', 1371494, 833930, 60.8], ['2012 to 2013', 1244041, 735368, 59.1],
+  ['2013 to 2014', 1541896, 795245, 51.6], ['2014 to 2015', 1680268, 857189, 51.0],
+  ['2015 to 2016', 1900691, 937034, 49.3], ['2016 to 2017', 1952226, 950210, 48.7],
+  ['2017 to 2018', 1886218, 918130, 48.7], ['2018 to 2019', 1787773, 845028, 47.3],
+  ['2019 to 2020', 1865740, 878903, 47.1], ['2020 to 2021', 891279, 496660, 55.7],
+  ['2021 to 2022', 2463621, 1234013, 50.1], ['2022 to 2023', 2432302, 1075508, 44.2],
+  ['2023 to 2024', 2594741, 1173545, 45.2], ['2024 to 2025', 2792839, 1253269, 44.9],
+  ['2025 to 2026', 2924430, 1311341, 44.8],
+];
+
 /* ------------------------------------------------------------
    State
    ------------------------------------------------------------ */
 let centres = [];
 let passRates = {};   // centre_id -> [{period_label, tests_conducted, tests_passed, first_attempt_tests, first_attempt_passes}, ...]
 let ageRates = {};    // centre_id -> { age: {tests_conducted, tests_passed} }
+let waitTimes = {};   // centre_id -> {period_label, median_wait_weeks, weeks_to_10pct_availability, availability_pct}
 let reviews = {};     // centre_id -> [{rating, outcome, reviewer_role, comment, created_at}, ...]
+let section = 'home'; // home | practical | theory
 let view = 'list';
 let selectedId = null;
 let search = '';
@@ -174,6 +199,12 @@ async function loadAll() {
       const a = await sbGet('age_pass_rates?select=centre_id,age,tests_conducted,tests_passed');
       a.forEach(row => { (ageRates[row.centre_id] = ageRates[row.centre_id] || {})[row.age] = row; });
     } catch (e) { console.warn('age_pass_rates not available yet', e); }
+    // Same story for waiting times.
+    waitTimes = {};
+    try {
+      const w = await sbGet('wait_time_stats?select=centre_id,period_label,median_wait_weeks,weeks_to_10pct_availability,availability_pct&order=period_label.desc');
+      w.forEach(row => { if (!waitTimes[row.centre_id]) waitTimes[row.centre_id] = row; });
+    } catch (e) { console.warn('wait_time_stats not available yet', e); }
     loaded = true;
   } catch (e) {
     console.error(e);
@@ -281,8 +312,57 @@ function render() {
   }
   if (!loaded) { app.innerHTML = `<div class="empty">Loading…</div>`; return; }
 
-  app.innerHTML = view === 'detail' && selectedId ? renderDetail(selectedId) : renderList();
+  if (section === 'home') app.innerHTML = renderHome();
+  else if (section === 'theory') app.innerHTML = renderTheory();
+  else app.innerHTML = view === 'detail' && selectedId ? renderDetail(selectedId) : renderList();
   attachHandlers();
+}
+
+function renderHome() {
+  return `
+    <div class="home-hero">
+      <h2>What are you looking for?</h2>
+      <p class="muted">Same DVSA data either way — pick the test you're preparing for.</p>
+    </div>
+    <div class="home-choice" data-section="practical">
+      <div class="home-choice-title">🚗 Practical test</div>
+      <p class="muted">Browse ${centres.length} UK test centres — pass rates, waiting times, and anonymous candidate reviews.</p>
+    </div>
+    <div class="home-choice" data-section="theory">
+      <div class="home-choice-title">📝 Theory test</div>
+      <p class="muted">National pass rate and year-by-year trend. DVSA doesn't publish this per centre — it's a computer-based test at shared venues, not examiner-led.</p>
+    </div>
+  `;
+}
+
+function renderTheory() {
+  const latest = THEORY_HISTORY[THEORY_HISTORY.length - 1];
+  const rows = THEORY_HISTORY.slice().reverse().map(([yr, c, p, rate]) =>
+    `<tr><td>${esc(yr)}</td><td class="num">${c.toLocaleString()}</td><td class="num">${p.toLocaleString()}</td><td class="num">${rate}%</td></tr>`
+  ).join('');
+  return `
+    <a class="backlink" id="homeBack">← Home</a>
+    <h2>Theory test</h2>
+    <p class="muted">Great Britain, all categories. Source: DVSA DRT111C, Open Government Licence v3.0.</p>
+    <div class="section">
+      <h3>Latest year</h3>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="num">${latest[3]}%</div><div class="lbl">Pass rate<br>${esc(latest[0])}</div></div>
+        <div class="stat-box"><div class="num">${latest[1].toLocaleString()}</div><div class="lbl">Tests conducted</div></div>
+        <div class="stat-box"><div class="num">${latest[2].toLocaleString()}</div><div class="lbl">Tests passed</div></div>
+      </div>
+    </div>
+    <div class="section">
+      <h3>Year by year</h3>
+      <div class="table-wrap">
+        <table style="width:100%">
+          <thead><tr><td><strong>Year</strong></td><td class="num"><strong>Conducted</strong></td><td class="num"><strong>Passed</strong></td><td class="num"><strong>Pass rate</strong></td></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <p class="note">Why no per-centre breakdown or reviews here: the theory test is a standardised multiple-choice + hazard-perception test taken on a computer, not run by an examiner — DVSA doesn't publish (and there isn't much reason to expect) meaningful pass-rate variation between venues the way there is for the practical test.</p>
+    </div>
+  `;
 }
 
 let nationalOpen = false;
@@ -350,6 +430,7 @@ function renderList() {
   }).join('') || `<div class="empty">No test centres match that search.</div>`;
 
   return `
+    <a class="backlink" id="homeBack">← Home</a>
     ${nationalPanel()}
     <div class="searchbar">
       <input type="text" id="search" placeholder="Search by centre or town…" value="${esc(search)}">
@@ -371,7 +452,7 @@ function renderList() {
       </select>` : ''}
     </div>
     ${cards}
-    <p class="note">Pass rates: DVSA official statistics (DRT122A/C/D/E), Open Government Licence v3.0. Reviews are submitted anonymously by candidates and instructors, and are moderated before publishing.</p>
+    <p class="note">Pass rates and waiting times: DVSA official statistics (DRT122A/C/D/E/F), Open Government Licence v3.0. Reviews are submitted anonymously by candidates and instructors, and are moderated before publishing.</p>
   `;
 }
 
@@ -389,6 +470,22 @@ function ageBlock(centreId) {
       <h3>Pass rate by age (17–25)</h3>
       <div class="tags">${chips}</div>
       <p class="note">DVSA breaks this out for younger candidates only; older age bands aren't published per centre.</p>
+    </div>
+  `;
+}
+
+function waitBlock(centreId) {
+  const w = waitTimes[centreId];
+  if (!w) return '';
+  const boxes = [];
+  if (w.median_wait_weeks != null) boxes.push(`<div class="stat-box"><div class="num">${w.median_wait_weeks}w</div><div class="lbl">Median wait to test day</div></div>`);
+  if (w.availability_pct != null) boxes.push(`<div class="stat-box"><div class="num">${w.availability_pct}%</div><div class="lbl">Slots still bookable in window</div></div>`);
+  if (!boxes.length) return '';
+  return `
+    <div class="section">
+      <h3>Booking &amp; waiting (${esc(w.period_label)})</h3>
+      <div class="stat-grid">${boxes.join('')}</div>
+      <p class="note">From DVSA's monthly availability data (DRT122F) — how this specific centre looked as of ${esc(w.period_label)}, not a live booking feed.</p>
     </div>
   `;
 }
@@ -449,6 +546,7 @@ function renderDetail(id) {
       <div class="stat-grid">${statBoxes}</div>
     </div>
 
+    ${waitBlock(id)}
     ${ageBlock(id)}
 
     <div class="section">
@@ -509,6 +607,11 @@ function attachHandlers() {
   document.querySelectorAll('.card[data-id]').forEach(el => el.addEventListener('click', () => {
     selectedId = el.dataset.id; view = 'detail'; render(); window.scrollTo(0, 0);
   }));
+  document.querySelectorAll('.home-choice').forEach(el => el.addEventListener('click', () => {
+    section = el.dataset.section; view = 'list'; render(); window.scrollTo(0, 0);
+  }));
+  const homeBack = document.getElementById('homeBack');
+  if (homeBack) homeBack.addEventListener('click', () => { section = 'home'; render(); window.scrollTo(0, 0); });
   const natToggle = document.getElementById('nationalToggle');
   if (natToggle) natToggle.addEventListener('click', () => { nationalOpen = !nationalOpen; render(); });
   const back = document.getElementById('back');

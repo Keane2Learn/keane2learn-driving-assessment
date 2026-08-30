@@ -43,6 +43,18 @@ create table if not exists age_pass_rates (
 );
 -- DVSA (DRT122D) only publishes a per-centre age breakdown for 17-25 year olds.
 
+create table if not exists wait_time_stats (
+  id uuid primary key default gen_random_uuid(),
+  centre_id uuid not null references test_centres(id) on delete cascade,
+  period_label text not null,          -- e.g. 'July 2026' — a single month, not a year
+  median_wait_weeks numeric,
+  weeks_to_10pct_availability numeric,
+  availability_pct numeric,
+  unique (centre_id, period_label)
+);
+-- From DRT122F. Unlike the pass-rate tables this is monthly, not annual —
+-- re-import periodically if you want it to stay current.
+
 create table if not exists reviews (
   id uuid primary key default gen_random_uuid(),
   centre_id uuid not null references test_centres(id) on delete cascade,
@@ -56,18 +68,21 @@ create table if not exists reviews (
 
 create index if not exists idx_pass_rate_stats_centre on pass_rate_stats(centre_id);
 create index if not exists idx_age_pass_rates_centre on age_pass_rates(centre_id);
+create index if not exists idx_wait_time_stats_centre on wait_time_stats(centre_id);
 create index if not exists idx_reviews_centre on reviews(centre_id);
 create index if not exists idx_reviews_approved on reviews(centre_id, is_approved);
 
 alter table test_centres enable row level security;
 alter table pass_rate_stats enable row level security;
 alter table age_pass_rates enable row level security;
+alter table wait_time_stats enable row level security;
 alter table reviews enable row level security;
 
 -- Anyone (anon key) can read centres and pass-rate stats.
 create policy "public read test_centres" on test_centres for select using (true);
 create policy "public read pass_rate_stats" on pass_rate_stats for select using (true);
 create policy "public read age_pass_rates" on age_pass_rates for select using (true);
+create policy "public read wait_time_stats" on wait_time_stats for select using (true);
 
 -- Anyone can read reviews, but only once approved by you.
 create policy "public read approved reviews" on reviews for select using (is_approved = true);
