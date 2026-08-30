@@ -85,14 +85,36 @@ examiner-led, and DVSA doesn't publish (and there's no real reason to
 expect) meaningful per-venue variation the way there is for the practical
 test.
 
-## 3. Moderate reviews
+### GPS-recorded practice routes
 
-Every review submitted through the site lands with `is_approved = false` —
-it won't show on the public page until you flip it to `true`. Do that in
-**Table Editor → reviews**, filtered to `is_approved = false`. Read each one
-before approving; if someone names an examiner despite the form's request
-not to, edit the comment to remove the name (or reject it) rather than
-approving it as-is.
+Since DVSA doesn't publish official test routes (deliberately, since 2010 —
+see the in-app copy for why) and third-party sites that claim to have them
+either republish DVSA's pre-2010 data (their own about page admits it may
+be stale) or forbid scraping in their terms, routes here are recorded
+first-hand: a "Record one" link on each centre's page uses the browser's
+location API (Leaflet + OpenStreetMap for the map — free, no API key) to
+trace a drive during a **practice or mock-test** lesson near the centre —
+never during the actual DVSA test, since phones have to be off then. Same
+moderation model as reviews: lands unapproved in the new `route_traces`
+table, you verify it looks like a sensible real route before publishing.
+
+This needs a schema update if you already ran an earlier `import_real_data.sql` —
+`schema.sql` now includes the `route_traces` table; either re-run the
+relevant `create table` block from it, or run the full file again (it's
+idempotent — `if not exists` throughout — and won't touch your existing
+centre/pass-rate data).
+
+## 3. Moderate reviews and routes
+
+Every review or route submitted through the site lands with
+`is_approved = false` — nothing shows on the public page until you flip it
+to `true`. Do that in **Table Editor → reviews** / **route_traces**,
+filtered to `is_approved = false`. Read each review before approving; if
+someone names an examiner despite the form's request not to, edit the
+comment to remove the name (or reject it) rather than approving as-is. For
+routes, sanity-check that the points form a plausible local drive (Table
+Editor will show the raw `points` JSON — not a visual map, but enough to
+spot an obviously bogus submission) before approving.
 
 ## 4. Host it for free
 
@@ -105,6 +127,30 @@ branch → `claude/test-centre-guide` / `(root)`**. GitHub gives you a URL like
 `https://keane2learn.github.io/keane2learn-driving-assessment/` within a
 minute or two. You can point a custom domain at it later for free too (just
 a DNS record), if you buy one.
+
+### SEO: a static page per test centre
+
+The main app is a single-page app — great for interactivity, bad for
+search engines, since Google can't easily index 323 separate centre pages
+out of one JS-rendered `index.html`. To fix that, `centres/<slug>.html`
+has one plain, pre-rendered static HTML file per centre (no JS needed to
+see the content), each with its own `<title>`, meta description, and the
+centre's pass rate/wait time baked directly into the HTML — plus a button
+through to the full interactive app (`index.html?centre=<id>`, which the
+main app reads on load to jump straight to that centre). `sitemap.xml` and
+`robots.txt` at the repo root point search engines at all of them.
+
+These are generated from `import_real_data.sql` (not live Supabase data,
+which this environment can't reach), so they'll go stale the same way the
+pass-rate data does — regenerate them the same way, by asking Claude,
+whenever you refresh `import_real_data.sql` for a new year. They don't
+carry review counts or GPS routes since those are live/dynamic — the
+static page's job is just to get found by search engines and hand off to
+the real app.
+
+Submit `sitemap.xml` in [Google Search Console](https://search.google.com/search-console)
+once the site's live, so Google actually discovers these pages rather than
+waiting to stumble on them.
 
 ## What's deliberately not built yet
 

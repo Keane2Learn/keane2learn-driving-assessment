@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Driving Test Centre Guide</title>
+<meta name="description" content="Official DVSA pass rates and waiting times for every UK driving test centre, plus anonymous candidate reviews and known practice routes. Free, no login required.">
+<link rel="canonical" href="https://keane2learn.github.io/keane2learn-driving-assessment/index.html">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
   :root{
     --bg:#f5f6f3; --surface:#fff; --surface-2:#eef0ec; --ink:#14171c;
@@ -43,6 +47,15 @@
   .home-choice:hover{border-color:var(--accent)}
   .home-choice-title{font-size:1.15rem;font-weight:600;margin-bottom:6px}
   .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;padding:4px 12px}
+  .route-map{height:200px;border-radius:8px;overflow:hidden;margin-top:8px;border:1px solid var(--line)}
+  .record-map{height:min(60vh,420px);border-radius:10px;overflow:hidden;border:1px solid var(--line);margin-bottom:12px}
+  .record-stats{display:flex;gap:16px;justify-content:center;margin:10px 0}
+  .record-stats .num{font-size:1.3rem;font-weight:700}
+  .record-stats .lbl{font-size:.75rem;color:var(--ink-muted);text-align:center}
+  .record-controls{display:flex;gap:10px}
+  .record-controls button{flex:1;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600;cursor:pointer}
+  .record-controls button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .record-controls button:disabled{opacity:.5;cursor:default}
   h2{margin:0 0 2px}
   .muted{color:var(--ink-muted)}
   .section{margin:22px 0}
@@ -145,15 +158,24 @@ let centres = [];
 let passRates = {};   // centre_id -> [{period_label, tests_conducted, tests_passed, first_attempt_tests, first_attempt_passes}, ...]
 let ageRates = {};    // centre_id -> { age: {tests_conducted, tests_passed} }
 let waitTimes = {};   // centre_id -> {period_label, median_wait_weeks, weeks_to_10pct_availability, availability_pct}
+let routeTraces = {}; // centre_id -> [{points, distance_km, duration_min, submitted_role, notes, created_at}, ...]
 let reviews = {};     // centre_id -> [{rating, outcome, reviewer_role, comment, created_at}, ...]
 let section = 'home'; // home | practical | theory
-let view = 'list';
+let view = 'list';    // list | detail | record
 let selectedId = null;
 let search = '';
 let regionFilter = '';
 let ageFilter = '';   // '' = all ages, else '17'..'25'
 let sortBy = 'pass_desc'; // pass_desc | pass_asc | first_time_desc | name_asc
 let loaded = false;
+
+// Live GPS recording — kept outside the normal render() cycle since a
+// Leaflet map instance can't survive being wiped by innerHTML on every
+// GPS tick. Only render() is called when *entering* or *leaving* the
+// record view; everything while actively recording updates the DOM
+// directly.
+let recordMap = null, recordPolyline = null, recordWatchId = null;
+let recordPoints = [], recordStartTime = null, recordStopped = false;
 
 /* ------------------------------------------------------------
    Supabase REST helpers
@@ -205,7 +227,18 @@ async function loadAll() {
       const w = await sbGet('wait_time_stats?select=centre_id,period_label,median_wait_weeks,weeks_to_10pct_availability,availability_pct&order=period_label.desc');
       w.forEach(row => { if (!waitTimes[row.centre_id]) waitTimes[row.centre_id] = row; });
     } catch (e) { console.warn('wait_time_stats not available yet', e); }
+    routeTraces = {};
+    try {
+      const rt = await sbGet('route_traces?select=centre_id,points,distance_km,duration_min,submitted_role,notes,created_at&is_approved=eq.true&order=created_at.desc');
+      rt.forEach(row => (routeTraces[row.centre_id] = routeTraces[row.centre_id] || []).push(row));
+    } catch (e) { console.warn('route_traces not available yet', e); }
     loaded = true;
+    // Deep link from the static SEO pages: ?centre=<id> opens straight to it.
+    const params = new URLSearchParams(location.search);
+    const deepLinkId = params.get('centre');
+    if (deepLinkId && centres.some(c => c.id === deepLinkId)) {
+      section = 'practical'; view = 'detail'; selectedId = deepLinkId;
+    }
   } catch (e) {
     console.error(e);
     loaded = 'error';
@@ -254,6 +287,19 @@ function rateClass(pct) {
   if (pct >= 50) return 'rate-good';
   if (pct >= 38) return 'rate-mid';
   return 'rate-bad';
+}
+
+function haversineKm(a, b) {
+  const R = 6371, toRad = d => d * Math.PI / 180;
+  const dLat = toRad(b[0] - a[0]), dLng = toRad(b[1] - a[1]);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+function traceDistanceKm(points) {
+  let d = 0;
+  for (let i = 1; i < points.length; i++) d += haversineKm(points[i - 1], points[i]);
+  return Math.round(d * 10) / 10;
 }
 
 const KEYWORD_TAGS = [
@@ -314,6 +360,7 @@ function render() {
 
   if (section === 'home') app.innerHTML = renderHome();
   else if (section === 'theory') app.innerHTML = renderTheory();
+  else if (view === 'record' && selectedId) app.innerHTML = renderRecord(selectedId);
   else app.innerHTML = view === 'detail' && selectedId ? renderDetail(selectedId) : renderList();
   attachHandlers();
 }
@@ -474,6 +521,30 @@ function ageBlock(centreId) {
   `;
 }
 
+function routeTraceBlock(centreId) {
+  const traces = routeTraces[centreId] || [];
+  const mapsHtml = traces.map((t, i) => `
+    <div class="review">
+      <div class="review-head">
+        <span>${t.submitted_role ? esc(t.submitted_role) : 'Anonymous'}${t.distance_km ? ' · ' + t.distance_km + ' km' : ''}${t.duration_min ? ' · ' + Math.round(t.duration_min) + ' min' : ''}</span>
+        <span>${timeAgo(t.created_at)}</span>
+      </div>
+      <div class="route-map" id="routeMap-${centreId}-${i}" data-points='${esc(JSON.stringify(t.points))}'></div>
+      ${t.notes ? `<div style="margin-top:6px">${esc(t.notes)}</div>` : ''}
+    </div>
+  `).join('');
+  return `
+    <div class="section">
+      <div class="card-row">
+        <h3 style="margin:0">GPS-recorded practice routes</h3>
+        <a class="src" id="recordRouteBtn" data-centre="${centreId}">Record one ↗</a>
+      </div>
+      ${traces.length ? mapsHtml : '<p class="empty">No recorded routes yet for this centre.</p>'}
+      <p class="note">Recorded during practice/mock-test drives near the centre, submitted anonymously, and checked before publishing — never during an actual DVSA test, since phones must be off then.</p>
+    </div>
+  `;
+}
+
 function waitBlock(centreId) {
   const w = waitTimes[centreId];
   if (!w) return '';
@@ -487,6 +558,37 @@ function waitBlock(centreId) {
       <div class="stat-grid">${boxes.join('')}</div>
       <p class="note">From DVSA's monthly availability data (DRT122F) — how this specific centre looked as of ${esc(w.period_label)}, not a live booking feed.</p>
     </div>
+  `;
+}
+
+function renderRecord(centreId) {
+  const c = centres.find(x => x.id === centreId);
+  return `
+    <a class="backlink" id="recordCancel">← Cancel</a>
+    <h2>Record a practice route</h2>
+    <p class="muted">${c ? esc(c.name) : ''} — start once you're near the centre, not from home. Never do this during an actual DVSA test.</p>
+    <div class="record-map" id="recordMapDiv"></div>
+    <div class="record-stats">
+      <div><div class="num" id="recordDistance">0.0 km</div><div class="lbl">Distance</div></div>
+      <div><div class="num" id="recordDuration">0:00</div><div class="lbl">Duration</div></div>
+      <div><div class="num" id="recordPoints">0</div><div class="lbl">GPS points</div></div>
+    </div>
+    <div class="record-controls">
+      <button class="primary" id="recordStart" type="button">Start</button>
+      <button id="recordStop" type="button" disabled>Stop</button>
+    </div>
+    <p class="note" id="recordStatus"></p>
+    <form id="recordSaveForm" style="display:none;margin-top:16px">
+      <label>I am a...</label>
+      <select name="role">
+        <option value="pupil">Pupil / learner</option>
+        <option value="instructor">Driving instructor</option>
+      </select>
+      <label>Notes (optional, no names)</label>
+      <textarea name="notes" maxlength="500" placeholder="e.g. Mock test route, examiner's own practice loop used for our lessons."></textarea>
+      <button class="primary" type="submit">Save route</button>
+      <p class="note">Routes are checked before they appear publicly.</p>
+    </form>
   `;
 }
 
@@ -566,6 +668,7 @@ function renderDetail(id) {
     ${waitBlock(id)}
     ${ageBlock(id)}
     ${routeBlock}
+    ${routeTraceBlock(id)}
 
     <div class="section">
       <div class="card-row">
@@ -627,6 +730,97 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2600);
 }
 
+function osmTileLayer() {
+  return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  });
+}
+
+function initRouteDisplayMaps() {
+  document.querySelectorAll('.route-map[data-points]').forEach(el => {
+    if (el.dataset.inited) return;
+    el.dataset.inited = '1';
+    let points;
+    try { points = JSON.parse(el.dataset.points); } catch { return; }
+    if (!points || points.length < 2) return;
+    const map = L.map(el, { zoomControl: false, dragging: false, scrollWheelZoom: false, tap: false }).setView(points[0], 14);
+    osmTileLayer().addTo(map);
+    const line = L.polyline(points, { color: '#0b5fa5', weight: 4 }).addTo(map);
+    map.fitBounds(line.getBounds(), { padding: [16, 16] });
+  });
+}
+
+function fmtDuration(sec) {
+  const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function initRecordingView() {
+  if (recordMap) return; // already set up for this session in the view
+  recordPoints = []; recordStartTime = null; recordStopped = false;
+  const el = document.getElementById('recordMapDiv');
+  recordMap = L.map(el).setView([54.5, -3], 6); // UK-ish default until we get a fix
+  osmTileLayer().addTo(recordMap);
+  recordPolyline = L.polyline([], { color: '#0b5fa5', weight: 4 }).addTo(recordMap);
+
+  const statusEl = document.getElementById('recordStatus');
+  if (!('geolocation' in navigator)) {
+    statusEl.textContent = 'Your browser doesn\'t support location access, so this can\'t be recorded here.';
+    document.getElementById('recordStart').disabled = true;
+    return;
+  }
+
+  let timerHandle = null;
+  const startBtn = document.getElementById('recordStart');
+  const stopBtn = document.getElementById('recordStop');
+
+  startBtn.addEventListener('click', () => {
+    recordStartTime = Date.now();
+    startBtn.disabled = true; stopBtn.disabled = false;
+    statusEl.textContent = 'Recording… keep this tab open while you drive.';
+    timerHandle = setInterval(() => {
+      document.getElementById('recordDuration').textContent = fmtDuration((Date.now() - recordStartTime) / 1000);
+    }, 1000);
+    recordWatchId = navigator.geolocation.watchPosition(onRecordPosition, onRecordError, {
+      enableHighAccuracy: true, maximumAge: 2000, timeout: 15000,
+    });
+  });
+
+  stopBtn.addEventListener('click', () => {
+    if (recordWatchId != null) navigator.geolocation.clearWatch(recordWatchId);
+    if (timerHandle) clearInterval(timerHandle);
+    recordStopped = true;
+    stopBtn.disabled = true;
+    statusEl.textContent = recordPoints.length >= 2
+      ? 'Stopped. Add a quick note and save, or cancel to discard.'
+      : 'Stopped — not enough GPS points were captured to save a route.';
+    if (recordPoints.length >= 2) document.getElementById('recordSaveForm').style.display = '';
+  });
+
+  function onRecordPosition(pos) {
+    const pt = [pos.coords.latitude, pos.coords.longitude];
+    const last = recordPoints[recordPoints.length - 1];
+    if (last && haversineKm(last, pt) < 0.01) return; // GPS jitter while stationary
+    recordPoints.push(pt);
+    recordPolyline.addLatLng(pt);
+    if (recordPoints.length === 1) recordMap.setView(pt, 16);
+    else recordMap.panTo(pt);
+    document.getElementById('recordDistance').textContent = traceDistanceKm(recordPoints) + ' km';
+    document.getElementById('recordPoints').textContent = recordPoints.length;
+  }
+
+  function onRecordError(err) {
+    statusEl.textContent = 'Location error: ' + err.message + ' — check location permission for this site.';
+  }
+}
+
+function teardownRecording() {
+  if (recordWatchId != null) { navigator.geolocation.clearWatch(recordWatchId); recordWatchId = null; }
+  if (recordMap) { recordMap.remove(); recordMap = null; }
+  recordPolyline = null; recordPoints = []; recordStartTime = null; recordStopped = false;
+}
+
 function attachHandlers() {
   document.querySelectorAll('.card[data-id]').forEach(el => el.addEventListener('click', () => {
     selectedId = el.dataset.id; view = 'detail'; render(); window.scrollTo(0, 0);
@@ -640,6 +834,47 @@ function attachHandlers() {
   if (natToggle) natToggle.addEventListener('click', () => { nationalOpen = !nationalOpen; render(); });
   const back = document.getElementById('back');
   if (back) back.addEventListener('click', () => { view = 'list'; render(); window.scrollTo(0, 0); });
+
+  const recordBtn = document.getElementById('recordRouteBtn');
+  if (recordBtn) recordBtn.addEventListener('click', () => {
+    selectedId = recordBtn.dataset.centre; view = 'record'; render(); window.scrollTo(0, 0);
+  });
+  const recordCancel = document.getElementById('recordCancel');
+  if (recordCancel) recordCancel.addEventListener('click', () => {
+    teardownRecording(); view = 'detail'; render(); window.scrollTo(0, 0);
+  });
+  if (view === 'record') initRecordingView();
+  initRouteDisplayMaps();
+
+  const saveForm = document.getElementById('recordSaveForm');
+  if (saveForm) saveForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(saveForm);
+    const btn = saveForm.querySelector('button');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const centreId = selectedId;
+    const points = recordPoints.slice();
+    const distanceKm = traceDistanceKm(points);
+    const durationMin = recordStartTime ? Math.round((Date.now() - recordStartTime) / 60000 * 10) / 10 : null;
+    try {
+      await sbInsert('route_traces', {
+        centre_id: centreId,
+        points: points,
+        distance_km: distanceKm,
+        duration_min: durationMin,
+        submitted_role: fd.get('role') || null,
+        notes: (fd.get('notes') || '').trim() || null,
+        is_approved: false,
+      });
+      teardownRecording();
+      view = 'detail'; render(); window.scrollTo(0, 0);
+      showToast('Thanks — your route will appear once it’s checked.');
+    } catch (err) {
+      console.error(err);
+      showToast('Something went wrong — please try again.');
+      btn.disabled = false; btn.textContent = 'Save route';
+    }
+  });
 
   const s = document.getElementById('search');
   if (s) s.addEventListener('input', e => { search = e.target.value; render(); document.getElementById('search').focus(); document.getElementById('search').setSelectionRange(search.length, search.length); });

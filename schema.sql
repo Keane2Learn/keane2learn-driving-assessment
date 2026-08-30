@@ -55,6 +55,22 @@ create table if not exists wait_time_stats (
 -- From DRT122F. Unlike the pass-rate tables this is monthly, not annual —
 -- re-import periodically if you want it to stay current.
 
+create table if not exists route_traces (
+  id uuid primary key default gen_random_uuid(),
+  centre_id uuid not null references test_centres(id) on delete cascade,
+  points jsonb not null,                -- [[lat, lng], [lat, lng], ...]
+  distance_km numeric,
+  duration_min numeric,
+  submitted_role text check (submitted_role in ('pupil', 'instructor')),
+  notes text check (char_length(notes) <= 500),
+  is_approved boolean not null default false,
+  created_at timestamptz not null default now()
+);
+-- GPS traces recorded in-browser during practice/mock-test drives near a
+-- centre (never during the real test — phones must be off then). Same
+-- moderation model as reviews: lands unapproved, you verify before it
+-- shows publicly.
+
 create table if not exists reviews (
   id uuid primary key default gen_random_uuid(),
   centre_id uuid not null references test_centres(id) on delete cascade,
@@ -70,6 +86,7 @@ create table if not exists reviews (
 create index if not exists idx_pass_rate_stats_centre on pass_rate_stats(centre_id);
 create index if not exists idx_age_pass_rates_centre on age_pass_rates(centre_id);
 create index if not exists idx_wait_time_stats_centre on wait_time_stats(centre_id);
+create index if not exists idx_route_traces_centre on route_traces(centre_id, is_approved);
 create index if not exists idx_reviews_centre on reviews(centre_id);
 create index if not exists idx_reviews_approved on reviews(centre_id, is_approved);
 
@@ -77,6 +94,7 @@ alter table test_centres enable row level security;
 alter table pass_rate_stats enable row level security;
 alter table age_pass_rates enable row level security;
 alter table wait_time_stats enable row level security;
+alter table route_traces enable row level security;
 alter table reviews enable row level security;
 
 -- Anyone (anon key) can read centres and pass-rate stats.
@@ -90,6 +108,10 @@ create policy "public read approved reviews" on reviews for select using (is_app
 
 -- Anyone can submit a review (it lands unapproved until you moderate it).
 create policy "public submit review" on reviews for insert with check (is_approved = false);
+
+-- Same pattern for GPS route traces.
+create policy "public read approved route_traces" on route_traces for select using (is_approved = true);
+create policy "public submit route_traces" on route_traces for insert with check (is_approved = false);
 
 -- No public update/delete policies on any table: moderation and data
 -- import happen from the Supabase Table Editor / SQL editor, logged in

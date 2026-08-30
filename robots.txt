@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://keane2learn.github.io/keane2learn-driving-assessment/sitemap.xml
