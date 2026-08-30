@@ -1,0 +1,58 @@
+-- Driving Test Centre Guide — Supabase schema
+-- Run this once in your Supabase project's SQL editor (Dashboard > SQL Editor > New query).
+
+create extension if not exists pgcrypto;
+
+create table if not exists test_centres (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  town text not null,
+  county text,
+  region text,
+  postcode text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists pass_rate_stats (
+  id uuid primary key default gen_random_uuid(),
+  centre_id uuid not null references test_centres(id) on delete cascade,
+  period_label text not null,           -- e.g. '2024-25'
+  tests_conducted integer not null check (tests_conducted >= 0),
+  tests_passed integer not null check (tests_passed >= 0),
+  source text not null default 'DVSA DRT122A (Open Government Licence v3.0)',
+  imported_at timestamptz not null default now(),
+  unique (centre_id, period_label)
+);
+
+create table if not exists reviews (
+  id uuid primary key default gen_random_uuid(),
+  centre_id uuid not null references test_centres(id) on delete cascade,
+  rating integer check (rating between 1 and 5),
+  outcome text check (outcome in ('pass', 'fail')),
+  reviewer_role text check (reviewer_role in ('pupil', 'instructor')),
+  comment text check (char_length(comment) <= 1000),
+  is_approved boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_pass_rate_stats_centre on pass_rate_stats(centre_id);
+create index if not exists idx_reviews_centre on reviews(centre_id);
+create index if not exists idx_reviews_approved on reviews(centre_id, is_approved);
+
+alter table test_centres enable row level security;
+alter table pass_rate_stats enable row level security;
+alter table reviews enable row level security;
+
+-- Anyone (anon key) can read centres and pass-rate stats.
+create policy "public read test_centres" on test_centres for select using (true);
+create policy "public read pass_rate_stats" on pass_rate_stats for select using (true);
+
+-- Anyone can read reviews, but only once approved by you.
+create policy "public read approved reviews" on reviews for select using (is_approved = true);
+
+-- Anyone can submit a review (it lands unapproved until you moderate it).
+create policy "public submit review" on reviews for insert with check (is_approved = false);
+
+-- No public update/delete policies on any table: moderation and data
+-- import happen from the Supabase Table Editor / SQL editor, logged in
+-- as the project owner (which bypasses RLS), not from the public site.

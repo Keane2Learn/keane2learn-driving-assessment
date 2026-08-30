@@ -1,2048 +1,404 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<title>Keane2Learn Driving Assessment</title>
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="K2L Assessment" />
-<meta name="theme-color" content="#232a63" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Driving Test Centre Guide</title>
 <style>
-  :root {
-    --pdt-navy: #232a63;
-    --pdt-navy-dark: #161b42;
-    --pdt-blue-pale: #eef0fa;
-    --pdt-gold: #c9962f;
-    --ink: #1a1d29;
-    --muted: #6b7280;
-    --border: #e5e7eb;
-    --bg: #f2f3f7;
-    --green: #1a7a3c;
-    --amber: #b8860b;
+  :root{
+    --bg:#f5f6f3; --surface:#fff; --surface-2:#eef0ec; --ink:#14171c;
+    --ink-muted:#565f68; --ink-faint:#8b929a; --accent:#0b5fa5; --accent-ink:#fff;
+    --accent-soft:#e4eff8; --line:#dadfe0; --good:#1a7f4b; --bad:#b3261e;
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg); color: var(--ink); -webkit-tap-highlight-color: transparent;
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#12151a; --surface:#1b1f26; --surface-2:#20252c; --ink:#e9ebee;
+      --ink-muted:#a4acb5; --ink-faint:#6d7581; --accent:#5aa8e8; --accent-ink:#0b1420;
+      --accent-soft:#1c2c3c; --line:#2b3038; --good:#5cc98a; --bad:#ff8a8a;
+    }
   }
-  .brand-strip {
-    max-width: 560px; margin: 0 auto; padding: 14px 16px 10px; display: flex;
-    align-items: center; gap: 10px;
-  }
-  .brand-strip .brand-badge {
-    background: var(--pdt-navy); color: #fff; font-weight: 800; font-size: 12px;
-    padding: 6px 9px; border-radius: 8px; letter-spacing: 0.3px;
-  }
-  .brand-strip .brand-name { font-size: 14px; font-weight: 800; color: var(--pdt-navy); letter-spacing: 0.2px; }
-  .brand-strip .brand-tagline { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
-  #app { max-width: 560px; margin: 0 auto; padding: 0 16px 48px; }
-  .hero-wordmark {
-    font-size: 26px; font-weight: 800; color: var(--pdt-navy); letter-spacing: 0.3px; margin-bottom: 2px;
-  }
-  .hero-tagline {
-    font-size: 12.5px; color: var(--pdt-gold); font-weight: 700; letter-spacing: 0.6px;
-    margin: 0 0 14px; text-transform: uppercase;
-  }
-  .progress-wrap { height: 5px; background: var(--border); border-radius: 3px; margin-bottom: 18px; overflow: hidden; }
-  .progress-bar { height: 100%; background: var(--pdt-navy); transition: width .25s ease; }
-  .card {
-    background: #fff; border-radius: 16px; padding: 20px 18px 22px; margin-bottom: 14px;
-    box-shadow: 0 2px 10px rgba(23,27,66,0.06); border: 1px solid var(--border);
-  }
-  h1 { font-size: 23px; margin: 0 0 8px; color: var(--pdt-navy); letter-spacing: -0.2px; }
-  h2 { font-size: 17px; margin: 0 0 12px; color: var(--pdt-navy); }
-  .subtitle { color: var(--muted); font-size: 14.5px; line-height: 1.5; margin: 0 0 6px; }
-  .note { color: var(--muted); font-size: 13px; line-height: 1.4; }
-  .tag {
-    font-size: 11px; font-weight: 600; color: var(--muted); background: var(--bg);
-    padding: 2px 8px; border-radius: 20px; margin-left: 6px; vertical-align: middle;
-  }
-  .f-label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin: 14px 0 6px; }
-  .f-label:first-child { margin-top: 0; }
-  .f-input {
-    width: 100%; padding: 11px 12px; font-size: 16px; border: 1.5px solid var(--border);
-    border-radius: 10px; background: #fafafa; color: var(--ink); font-family: inherit;
-  }
-  .f-input:focus { outline: none; border-color: var(--pdt-navy); background: #fff; }
-  .f-textarea { resize: vertical; min-height: 44px; }
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
-  .yn-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 0; border-bottom: 1px solid var(--border); gap: 10px;
-  }
-  .yn-row:last-child { border-bottom: none; }
-  .yn-buttons { display: flex; gap: 8px; flex-shrink: 0; }
-  .btn-chip {
-    padding: 8px 16px; border-radius: 20px; border: 1.5px solid var(--border);
-    background: #fff; font-size: 13.5px; font-weight: 600; color: var(--ink);
-  }
-  .chip-active { background: var(--pdt-navy); border-color: var(--pdt-navy); color: #fff; }
-  .chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
-  .score-item { padding: 14px 0; border-bottom: 1px solid var(--border); }
-  .score-item:last-child { border-bottom: none; }
-  .score-label { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
-  .grade-row { display: flex; gap: 8px; margin-top: 8px; }
-  .grade-btn {
-    flex: 1; padding: 12px 0; border-radius: 10px; border: 1.5px solid var(--border);
-    background: #fff; font-size: 16px; font-weight: 700; color: var(--muted);
-  }
-  .grade-active.grade-1 { background: #7a1a1a; border-color: #7a1a1a; color: #fff; }
-  .grade-active.grade-2 { background: #b8860b; border-color: #b8860b; color: #fff; }
-  .grade-active.grade-3 { background: #1a5aab; border-color: #1a5aab; color: #fff; }
-  .grade-active.grade-4 { background: var(--green); border-color: var(--green); color: #fff; }
-  .rate-btn {
-    flex: 1; padding: 12px 0; border-radius: 10px; border: 1.5px solid var(--border);
-    background: #fff; font-size: 15px; font-weight: 700; color: var(--muted);
-  }
-  .rate-active { background: var(--pdt-navy); border-color: var(--pdt-navy); color: #fff; }
-  .score-summary { display: flex; align-items: center; gap: 14px; margin: 6px 0 10px; }
-  .score-big { font-size: 34px; font-weight: 800; }
-  .score-of { font-size: 15px; color: var(--muted); margin-left: 2px; }
-  .band-pill { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; color: #fff; }
-  .band-NeedsDevelopment { background: #a33a3a; }
-  .band-Developing { background: #b8860b; }
-  .band-Competent { background: #2c5aa0; }
-  .band-Advanced { background: #1a7a3c; }
-  .nav-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 4px; }
-  .btn-primary {
-    background: var(--pdt-navy); color: #fff; border: none; padding: 14px 22px;
-    border-radius: 12px; font-size: 15.5px; font-weight: 700; margin-left: auto; display: block;
-    box-shadow: 0 3px 10px rgba(35,42,99,0.25);
-  }
-  .btn-secondary {
-    background: #fff; color: var(--ink); border: 1.5px solid var(--border); padding: 14px 22px;
-    border-radius: 12px; font-size: 15.5px; font-weight: 700;
-  }
-  .btn-full { width: 100%; margin-bottom: 10px; }
-  button { cursor: pointer; font-family: inherit; }
-  button:active { transform: scale(0.98); }
-  button:disabled { opacity: 0.6; }
-
-  .top-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .topbar-btn {
-    background: var(--pdt-blue-pale); color: var(--pdt-navy); border: 1.5px solid var(--pdt-navy);
-    font-weight: 700; font-size: 13.5px; padding: 8px 14px; border-radius: 20px;
-  }
-  .topbar-btn:active { background: var(--pdt-navy); color: #fff; }
-  .link-btn { background: none; border: none; color: var(--pdt-navy-dark); font-weight: 700; font-size: 14px; padding: 6px 2px; text-decoration: underline; }
-  .link-btn.danger { color: #9a2323; }
-  .save-indicator {
-    font-size: 12px; color: var(--muted); font-weight: 600; opacity: 0.85; transition: opacity .3s, color .3s;
-    margin-left: auto;
-  }
-  .save-indicator.save-flash { color: var(--green); opacity: 1; }
-  .save-indicator.save-error { color: #b3261e !important; opacity: 1; }
-  .note.warn { color: #9a5a00; background: #fff6e6; border: 1px solid #f0d9a8; padding: 8px 10px; border-radius: 8px; }
-
-  .session-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 0; border-bottom: 1px solid var(--border); gap: 10px;
-  }
-  .session-row:last-child { border-bottom: none; }
-  .session-name { font-weight: 700; font-size: 14.5px; }
-  .session-meta { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
-  .session-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-
-  .sig-block { margin-bottom: 18px; }
-  .sig-block:last-child { margin-bottom: 0; }
-  .sig-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .sig-canvas {
-    width: 100%; height: 150px; border: 1.5px dashed var(--border); border-radius: 10px;
-    background: #fafafa; touch-action: none; display: block;
-  }
-  .summary-bar {
-    font-size: 12.5px; color: var(--muted); font-weight: 600; margin: -6px 0 12px;
-    padding: 6px 12px; background: #eef0f3; border-radius: 8px; text-align: center;
-  }
-  .hub-tile {
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    padding: 14px 4px; border-bottom: 1px solid var(--border); cursor: pointer;
-  }
-  .hub-tile:last-child { border-bottom: none; }
-  .hub-tile:active { background: var(--bg); }
-  .hub-tile-title { font-size: 15px; font-weight: 700; }
-  .hub-tile-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
-  .hub-arrow { font-size: 20px; color: var(--muted); flex-shrink: 0; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:14px 16px}
+  header h1{margin:0;font-size:1.1rem}
+  header p{margin:2px 0 0;color:var(--ink-muted);font-size:.85rem}
+  main{max-width:720px;margin:0 auto;padding:16px 16px 64px}
+  .searchbar{display:flex;gap:8px;margin:14px 0}
+  input,select,textarea,button{font:inherit;color:inherit}
+  input[type=text],select{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:10px;cursor:pointer}
+  .card:hover{border-color:var(--accent)}
+  .card-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .centre-name{font-weight:600}
+  .centre-sub{color:var(--ink-muted);font-size:.85rem}
+  .pill{font-size:.78rem;padding:3px 9px;border-radius:100px;white-space:nowrap;font-weight:600}
+  .pill.rate-good{background:rgba(26,127,75,.12);color:var(--good)}
+  .pill.rate-bad{background:rgba(179,38,30,.12);color:var(--bad)}
+  .pill.rate-mid{background:var(--accent-soft);color:var(--accent)}
+  .pill.none{background:var(--surface-2);color:var(--ink-faint)}
+  .backlink{display:inline-block;margin-bottom:12px;color:var(--accent);text-decoration:none;cursor:pointer}
+  h2{margin:0 0 2px}
+  .muted{color:var(--ink-muted)}
+  .section{margin:22px 0}
+  .section h3{font-size:.95rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint);margin:0 0 10px}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+  .stat-box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-align:center}
+  .stat-box .num{font-size:1.4rem;font-weight:700}
+  .stat-box .lbl{color:var(--ink-muted);font-size:.78rem;margin-top:2px}
+  .tags{display:flex;flex-wrap:wrap;gap:6px}
+  .tag{background:var(--surface-2);border-radius:100px;padding:5px 12px;font-size:.82rem}
+  .review{border-bottom:1px solid var(--line);padding:12px 0}
+  .review:last-child{border-bottom:none}
+  .review-head{display:flex;justify-content:space-between;font-size:.82rem;color:var(--ink-muted);margin-bottom:4px}
+  .stars{color:#e0a800}
+  form{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+  form label{display:block;font-size:.85rem;color:var(--ink-muted);margin:10px 0 4px}
+  form label:first-child{margin-top:0}
+  textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);resize:vertical;min-height:80px}
+  select{width:100%}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  button.primary{margin-top:14px;width:100%;padding:12px;background:var(--accent);color:var(--accent-ink);border:none;border-radius:8px;font-weight:600;cursor:pointer}
+  button.primary:disabled{opacity:.6;cursor:default}
+  .hp{position:absolute;left:-9999px}
+  .note{font-size:.78rem;color:var(--ink-faint);margin-top:8px}
+  .empty{color:var(--ink-faint);padding:20px 0;text-align:center}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .2s}
+  .toast.show{opacity:1}
+  a.src{color:var(--accent)}
 </style>
 </head>
 <body>
-<div class="brand-strip" id="brandStrip">
-  <div class="brand-badge">K2L</div>
-  <div>
-    <div class="brand-name">Keane2Learn Driving Assessment</div>
-    <div class="brand-tagline">Session Forms</div>
-  </div>
-</div>
-<div id="app"></div>
+
+<header>
+  <h1>🚗 Driving Test Centre Guide</h1>
+  <p>Official DVSA pass rates, plus anonymous reviews from real candidates — no names, ever.</p>
+</header>
+
+<main id="app"></main>
+<div class="toast" id="toast"></div>
+
 <script>
-window.K2L_ASSESS_B64 = "JVBERi0xLjQKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSIC9GMiAzIDAgUgo+PgplbmRvYmoKMiAwIG9iago8PAovQmFzZUZvbnQgL0hlbHZldGljYSAvRW5jb2RpbmcgL1dpbkFuc2lFbmNvZGluZyAvTmFtZSAvRjEgL1N1YnR5cGUgL1R5cGUxIC9UeXBlIC9Gb250Cj4+CmVuZG9iagozIDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhLUJvbGQgL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcgL05hbWUgL0YyIC9TdWJ0eXBlIC9UeXBlMSAvVHlwZSAvRm9udAo+PgplbmRvYmoKNCAwIG9iago8PAovQ29udGVudHMgMTAgMCBSIC9NZWRpYUJveCBbIDAgMCA1OTUuMjc1NiA4NDEuODg5OCBdIC9QYXJlbnQgOSAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKNSAwIG9iago8PAovQ29udGVudHMgMTEgMCBSIC9NZWRpYUJveCBbIDAgMCA1OTUuMjc1NiA4NDEuODg5OCBdIC9QYXJlbnQgOSAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKNiAwIG9iago8PAovQ29udGVudHMgMTIgMCBSIC9NZWRpYUJveCBbIDAgMCA1OTUuMjc1NiA4NDEuODg5OCBdIC9QYXJlbnQgOSAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKNyAwIG9iago8PAovUGFnZU1vZGUgL1VzZU5vbmUgL1BhZ2VzIDkgMCBSIC9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iago4IDAgb2JqCjw8Ci9BdXRob3IgKGFub255bW91cykgL0NyZWF0aW9uRGF0ZSAoRDoyMDI2MDgwMjE0MDkxMCswMCcwMCcpIC9DcmVhdG9yIChhbm9ueW1vdXMpIC9LZXl3b3JkcyAoKSAvTW9kRGF0ZSAoRDoyMDI2MDgwMjE0MDkxMCswMCcwMCcpIC9Qcm9kdWNlciAoUmVwb3J0TGFiIFBERiBMaWJyYXJ5IC0gXChvcGVuc291cmNlXCkpIAogIC9TdWJqZWN0ICh1bnNwZWNpZmllZCkgL1RpdGxlICh1bnRpdGxlZCkgL1RyYXBwZWQgL0ZhbHNlCj4+CmVuZG9iago5IDAgb2JqCjw8Ci9Db3VudCAzIC9LaWRzIFsgNCAwIFIgNSAwIFIgNiAwIFIgXSAvVHlwZSAvUGFnZXMKPj4KZW5kb2JqCjEwIDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDI0OTQKPj4Kc3RyZWFtCkdhdTBGPkFyOSsmcTgwMWk2c3U5ZDUmQEEqa2RFPTIpXVJZZ1hsWj5wLWs3NzcnLyQ5ODkyPnE/W21nQT1MLWMkRyx1Zk9QOzokIWtQS3VpKzZjVGlpLzpZOTdTQURgUyJuMGEuQUA2cW1oJDo6VF9UJChqcWpEKmMobWFwLlxWXGNRbEVyUTcvPV9oJDwrPmZRbDptWVEnYzliT1FLWFlVK09NLl0pVkd0RW0jI1pRITtdc0tsdTtdPmVtT1daT29iYEA5Yk50THJNcCVxRmdKS08namROZk0rJmc6ND5NI1lBIXA5VEFKcWI8XiRoLV1qYjhjJUVtbHEyMWVjc2djRjArPDJGOTlkLk1NWWtCUVAwTkZvTSkyWiJJZmsuQnJhSTtGP0ojKyNCMWxfQGpUJllZaWVOaSdZS208ITdZTU10b1tAYiZGYzM0UWxbLlxbQmhRPDZOSkBObGU1JU51XkIkMjdpRlUzR1JLS0FVODdNIXJCaUxZX1BZcnRJUWlNJktRLWtANUZmOj0rLDsrLHQyTl11QDRAYXNbYjNwNnVsZj8lW0stLVZyb2E7Q2pAMV8kJVNUI2BHKGdQKE5dXE09czFnZywiWWErIm1WbSszNDhJW0dnU0s5VDRTaUwkNEI+KkpCalxbWU0wKmF0Y1UlK0dIKWRdXVJja21ORiwlUlk0PVhFcFVwW2xqNFVSb0c6ZEInWTFOMnJTR2dpSVptMy8pLyYzdTVtbihyYHBGbUdeWl1JM1lTRVpdVT9jcDliMTpqc2NtPi1rVTREYVxyK1U6MW5YTUctIyJcUzhJQFosby1gLjVZLWc7ZjU6Q2QzdT5YLU5hNVFQZmJxRSw7S2VFJiV1bm50ciJrUExDVUwna1ZkbiVqJTBBNTxkNi0rXzZiWCJccj9dVV5JcjBQLjdmbWEnaD9xIScxa2oycGMhZSdGZExGSSYqdU4zaiEkNXFKYltATm0qXVVWT1AvQ1QlOyVpJFUjPj5hcjxbXDEkczRDK0lnSUNMTXNSciZAZEAiVis7M1RVS2Qocl0wbz1kIXNGKkN1TFE7JWlOMk1fWkJwLklcYS9nJiIxOUtAYyVbb0cqK0BeJCZAbTlHSScnS2JKL05lKCciQT5VSzYlayEnJkVZR2xTLSxraklVNiNoJFttcHF0U3VXPTxIM2Y3TnA8KUxWJUs0P3V1P0p1XytKI2FTMmsmZiI5MF1DIi1VXUUhKjI3Rk45MmpkN2Q/K2lRMU9hZ1VZKClIUl51cXBJWCtYVTNFO3BYJmRITy9CYSwpajhkREJhb19mXjI2KixObEk4ak1DLGgoQC5zMktfSE8lT1srYzcsPTE/WU8rOHVYPixCa1VgS1dHPmMqPG8yRyp0IzM4LUFCLmFGYWV0b1o1W08rLV5DTlkhYiUkRklGRSk4RG5BPEQ4T2dHOTdTOVRxN0A3KmFIMzEucm8sUVE0Syt0WiNtV25ndC5gUFZPSVk+aFAwW0o+NyFYX2xiVTMuTkQ6RkxPMmRDN19ZLFYwJ2FrbitjPzYkPSpRRipBZW0vMnEnZWUlbFM+ZGJqRmRVT283WlgxMVJsaUErMGYwVFYtbD9ORWJyUUJsZl4nWCxHRl8+VyVgSFBpRDZgI18sMGdgOm8rYkFPN3MzWVhnXDhyVj8uXGF0VHFqLU09QChRXyIwKVErKW9NJyFlXiFeU0hMXUk6KyZuT2VKRUw1KkxmJkk+ZDFwKW4pdG1tPk5sRyU1c1RfKF5JIyRsJF9EInJUJFk8a0E9NWo0MlNTam1zajlRbFtAZSNEMCRuU2g3K1hcM3FQaXJldFFFQXA2T1slMSwvMSpGNUdQZ1koNlpIOUQiSkVcbFheR29bZCopL3VYXEtLPT9vMVlBdXRWJj0pRDRKTmQ1QnM5RG9sTlJIaVlMOCR1RE8sMWVsRVlMZkdwYzczVlZQQTNHLFF0UkUwO2A2PGI4N1cjU1UxPVM2SjZ1S0EwM0JWTktWX1xsNSFuPElyYEdXazhwXV1SR15VIW1tXy1maT08Vz5TR2hJaT1aVmRkQiRQYUJVJztZcjA1LkMob2csL1UrZi84KSknZXIua0x1dD03TDl0VGJjVy82Z2ByP0wtIWUkWEReMDs2X0ZnX2k6VjAwWE1RQWpIc0tlYmgqXjRXMCFwRl83azNBSS1uYCh0cy1GLDo4IWd1b2xoYyRucWtALG1vRDo0Xi1qOEsvPTFTNSozO1dIZWxbNCRHbTRcMWlrSkYmIVBla3JgYkNFQitVY0YlWlFDM2NjYy9gLz40NERJLFFMLyh1O0hDUEo8JyEvbS5NQDEsIkU+JFY8ZSwpW3BfSyksTGdUYzlBTVsiI1slSnNmKGdRYUImWEVaWEE4bGFVPmgxISlIc05YSVElYlFpTF5fJS9sZ2c+KFBwbGRjPXJhRF5fYjYnQUc0SC1GNGsiO01EYFxaOGJlTWQ6LHMtSmpFPXAvZDlbZ0khVitiI0NyQDpAPjxWLCE3LHRlKkBsXzxPSz5NYSNERWgvSGIjQitSOz8icFMqb3VacVVJQlU7Ui9RLnUiPyZNcExubG1WQjUpb1AnUlUyYzo/UV1Dc18vJz0lQU1mZzlZSnRkNTpNISUxJ2gvP1I8OWFMbCREU0BFNklpPkVBXXQmZVhnMGhTJSc/Z1xOQjJIbT4tdGwpW0ArW1NaOSRJWmZUdG80LV09KV9lXmdNYi5LJWUpM0ZaWUVBSU06R3BDVkREbzBrN3E1Mk1nMzEvSzUocFlALktiMUZfVEMpPC4rSlJfYCxcYiRzPXBEKVNZJWlkODFLamw4bFVFaEFGTEhKNlBnYWY/PSMtTkVwKmk9K3U5b24iT25kYCZqZHIpNyozdSMpJSklX0lEJks6YkU6cEFZWDJKQVUmVCc3IT4vRGxmTkpuKGRiLC0kcjJHSF9QZ3FXTDMiakhcWGhqXlhZWk1CT2Y5SiVPUDQ4RV4yOlZ1Z15pNEcnPURqO3BoWWpCW2QsZHIpNyozdUNJbUcnRChARThqYnMnYE1WOm4qOzZBSDImXCpbM2dSUFBKO2VpVicrJF81SW1fPWgsQlFST1hvOmBRITpibWJpLGkvcyZpckZROklHJTRfQXRaVzcrVG5dQSNqdDA9RWZoIWwnSiJGWDReUjVvbV8wYWguSW9WT09oQmdWTlkyXV9BPDZFVG9bJk5AYVkuWzQtL0ZDZTkqWURaKVhaWihjUnRuT010PnBdTVIjcSVER1spOFM1Smlpa1sqYls0WnAuQ08xZXI4JEkxUVZqJW9ZMHM8bUdOM2Q8VjRybkohcytXImVHfj5lbmRzdHJlYW0KZW5kb2JqCjExIDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDE3NTkKPj4Kc3RyZWFtCkdhdTBEZ04pIj0mOk86U29NWzUyRCdqPj1lMzotKm5bXUsnJDpwY1pVNDw1XEtMQURhWTVFXW8sXWooUmkhVjAoRHJeOU1SPCx0Om9VI1p1JXAiLk1YVEFFaF9UMHQyKGwuPldRbTw8QSFza2I/S0YsUF0hbEQ8JDwhKmBgRWhPVV8/RFFlIlptRXBXOmVoVT9QUWlAZ1UhdSdDLD9WVW4uKEE8Ujw0VC1lRDJOPyYiMVEnMVplW25dLEVyU1xfLDxZJV8+JWVqcWQ3XGgjKC4hU2BsISFTcj8lcCpeJi42IVkyIzUoSDw0UlVVQ2pwMmNFJV5SNHF1JHNGT2NoRkpOZidzXjBNMSRUZjhBQlBLQHIkUzAjXTFhNFQwayU3KWwxX1ZdcVk6OE41REc4TFFsN2NQcUZKKGwlU1ZyW2BlajZLaGlibjhkZ05YRWdYKG9PQDw1VEZwNCpvMmhgK3R1LEc2KWE6V0EsJV85MScucz0hbFhXMk5faytqbjlcJE5UOXMxKU1OYVx0XWMlP1ImK0gtMiIjMFEhbE5fQ2IpdGtuOiImVCNiPVJHaCssK1o2L0ZGbklMIlhYaEQ+ay5kajE4SVN0cFNbcjs2cCdmUihiVVduW1h0QTglWFMjPmVGcVo3S05hNFxxcnRWNzIlN0pZKikyKC1ySm87ZEBZQWUhTmcnSFUqLUFCNjg+ZT0vPkBEbylKVG5aakBYcVlvTE9YK3AmPWZcPiJbU05LLjYhYk5ZJDg5YWJ1M1NsUGE5YFFAXWN0QmRxM0lDW1IjKSdMU0BALjdbXzAiK2ZvNSQnOFJHYTkjTHBPV2VjZylQVUxxKU9zSVl0ZGo8NXVATjIyTmtXJiNnJk8lQzpnLWNXST46azVbUFFhYywsMDA9QyZbZGhAKGZscFlGVnEjXHIlJnRELCRbTz8kb1xgcSYxLl8tWj8uLitqIilkUjhXOk1xWmNcamRWRXFYWDleUjNtOVpPTUdsZTdxZyhsXGM/O1MiPkAyclE8Pl0yYio0LTdmTU07ImdbOmp1OVY2SSpUYHA3TjtpRi5OY0JzNnQsTjQhUSR0MjhgdD5TcitAakFnTHE+Sk9wSzFJMjFNOkdzN1QtcDMoN1RzUUlCWyNFLUtzN1NJYUNnOiMhKFltRmctVFBSKzc0PnE4SzE8JmMkSjsxOUkxUCRXYmNtWUVYSFE5Zy9CLC9TMCtOU3BbaV1VNWVcNE88U1VSaWI0bGM5RSM0Q15bUkwyI0RRXzBlWDpcTlBfXWBqRWo1Ylc+NkQ6UXIzQUdnWHJSbil1KDNISGRzMkBpM2RcaSlFXy9GbkJRXEJGXF5JYWBYdGNTbDo3bCJUKURTZUJAJClPV2hVZ2EmZSI+UlxNUyEtampIKzFQWTknKD8wZzQ5WCdDbWRgIzJpVE9iPCExO191Oj5KZlQ/MUI/O1pnTUdnZ1BwRW8yV2dUSnUnVy87Z2ljIzMpa3AnXF9oVF9xKiRRPW1LaS9bOWNfNTBaXC9DUFMyL3EyZ2xtWnNFIk9TckZKJk0oaHBrKStWLzU/NCtySFpKNEQ4WTxgT1AiP1QrMkk+bGxsPW44bEEjKmNlXE0lSUd1NVpyUGNOTz9DWCc7XyxgTlh1LW01LEgqWSFpUDtxSStFdFhIb0I5KkkoI29zZzdJXUJwbHRSPTFZQWlbRjpnXSQ8VURYPydsLVAnTGZEKUNnS0xYOEJjIi9PKXEjLXFAOiQkMTphcUNAUGJjayxqW1VBPC5SLkNZN0xAcjY1JDw8PU9AXkY+WVlqYHA9alhnS1h0R0xDXzRdNV1yb2o0VGxnVXEzby85QkYwbz4wSVY2c3I4MGUiQlEzLzBPcmBWL1lqVTEvSjAwMk9DXjFwTXAlQGQlVVNDP3FwPzUsYlpGQnNZNlxIYWBjWylSXEAjLlEzLU1CcGNbbz88OWlXZ2hjT3RQSzJXP25rL0tsRmJXW04/MipZN0hpWm0xISlyb0w+JVpJQ1QtZi8sTDssQ0lIanMyN2RBYzhiODxrLlY9WkguZVJtMXRjKEtxSERiVThmcVc5SCJKbzAiNSlBKGUjLTlbQ1xZWV8oQykxRHJcQjI1YG0iQEw0LjMkZD8uQCdoL2EmPVJLWFJaWWUrN1V1W2ssOCRWKmMpSUNRJis/JWhNXVA+aChUJmlcPDk8O00oaGM1YGFgMSEvKloqaiREWl0vUC5lMjlCLlpabGxHJilvbk0+JXVEN2I+XDBBOFxBOk9mTS9XYCMuYU0iUGg3XFRranI7IW1tOS0xUUxFLGcoV3RlUzY9ZnAsXEg7R2FNQ04zI2QyRmc5aXJLdDIhRltTblRFfj5lbmRzdHJlYW0KZW5kb2JqCjEyIDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDE2NzkKPj4Kc3RyZWFtCkdhdTBEOTY5KV4mQUlgZHFOVF5pOGdhLlkqIXFwOjw0cSxqbUBKXSZKU1tqV1xLa1RicmRCKTxUYmw/bj8uXmM2XDJEYHJuKj9TNTBhITxqWFNCS10hck5lTVRAWEpnTFtZPjMsU0lzdSNmNlVOX0psPyUwSiphYTVfUU9NLXFHRWI0NT1TWC0tU0RIOihfQi4ic1xxdGUyVSEvR2thMEZlOGVyczpocVNYQkV1OkwiaG5UNixEbSlVTCN1ZEIra0U9Yi9VW0BVKGV0LV0pW3BBQ1k3VVs4aUFcTmJvJG5JOS42MiZmVktAZnJsSC0rQTlZUCxaMzhDTWsuaCNfLmBdcU0tKV02bGBfMGw1RlIiVG03ciJ0byVAMGlrPihIcjEkMzBpVkBtNFxxOVZSJGolXlBvJVJPUEc9SyVhVEg6TnAlZk4uTkFcJlM+TzotRVJcLTsnSElvVlRRdTNCOnVQaFFvNjhTbCRqKVJzJkJAV2dVJWdcLS1XLmZYYmQlbCNHcV1UR2RnOTddZ2lJPzU3YXBnTVwpWkZYJ1luWCsyayssYHBwYV5WTWYwcUQ1PVRMU2hvcklJKmpgcEBsQlkwVmNFNG1gLCpGSjU5ZlBMdE4scm5gUzBsczBhMXVYW1NAMF9FX2NcXFtKb2ssQE5CdW9ya2NQRy9fc28iPl8uNEdnb0AiWVRGMlNAR1xmOWgta3EkTSdocmlUMFQ+ISJrKS41IUtEJSc1RUVWUWlVNV1FRykkJWFrT1Y7LSUsXDhLW0lldFJLXlZIPjkhLE0icDE/PFlONUNNUkldYCJbPysxPExUZiZSYmlxU2ozX0ItbzVZS1c/T3FBOzRvVThbU05COFpzMUs8WkhjTzVYV01hKWsvb1NTcyc+KDdaZkFAPDchU1QiRSxBcjFENy9qPjtxKm1rTGExQlBnIi90M0BvdW0lXCsqdDhKT1NWPDJIb1Fpci8kYyVZTDZ0XVw0WkhUSVouJ0RnTHMkU1FrNkZJXGtMYCVuSFpVKT1NUnRqcFVSRUpCbFNMUGd1R2lOWyNxY0o/QV9zSE5dOElcJ15qRTEralJCOVo3QCdTL2JiMiQxXGZIOl1ZUUQtYmJvbFhhMnBPQio+WyU3JGRpaHU6TWk+ZWo8W0ViTzxDPV9IXiQhSj9EdC5DVitKJUlJMjhhNiNDNURGPSg+SF1UQFgwIi9SQXNXcW4rZ1spZC5PVGBIW1o0I2NYa0pQJT1BMTc+ZXRpblAsVlA4NyUkT21ZRVhIKCsrT05YN11wOChOYTlUNEdIVC5PQCdkSGAxLWM2QEojNCg1R2RabzgnLStqMS5SaV9sVGEnZmA/NDkxKmM1TVtuNmFnWi0iQC5LT1hsam5jIk5jc1pYVlMnbGxiMChtR1JLdW5EIkVkNktUZWxJTnAwL0QrWSxpWF1ZMT1vaXFvP004Y1ZuJlpKSkxfRD1oXSxHPFdRRTouMiIyc0xwKjdFYEFzYlVYbSdDWGxUaUI0ZHBOUTVnbDA/KyRkKUFDRDFBT1c4SnBeQF5udCRzJiJYMmgsWideYV9qTEJbcDUlWzQxPkpWXWo9dXJEbSp1P3VINi8wRTVjQz1xXisyZVo4Rks1PFd1bmZjaiJtMisyLXVBTjc+Qk1LPWZkWm5vSjFFQFU9KikrbV89NVVnTiUlYD5GP1AkOzonO083WCpScCo9RFFqMixTUHAkaj49P1BUZEd1KkchSnNHXnEtKVtYYV5CPTl0Xm84RUAhSyJjY15cQmdMbyZwKjhCRz1vJWFxOmg5PUxfOUVZS0RhM15CP086b1YkTFBGcUxAYm5NNWB0cGM3MVY6WVUsXFQ4VG5nKTJoKVRwI2RLTi83RGBCbStqcnMoPEZTPytYPTVCKlZHYyIyRFEhbzMjbkl1TTo5Qm1uKl1AKSwuVHEpbi9CWik2a3Rlc0g4LnI5aFMsTk1Uc1EhNTZZKV9lNkJeN11qJWg8LFdKS0s7YXM7JTY2bzZEKU42PEFyW29nWFxuJV1ob1REXlVZXV9IVkZpQFAoL1Q2S11lR2cjXSZnM0tURzxtSjx0WSFDUTc1TzJWOyYwQl5YRj5GV2lUU2cqYkYiVkJQRG1GVmJSW1Y3cUwmKj49Q0VtczonaCZ0cCJ1akZSSkdKdFAxKDhbKWdKQF5dIUxPImVdREktNVdRalRwLzIwaj9BY20hTFs8JjwkP2k3JStSTy91c21qczEvcnJkVD0mSH4+ZW5kc3RyZWFtCmVuZG9iagp4cmVmCjAgMTMKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDYxIDAwMDAwIG4gCjAwMDAwMDAxMDIgMDAwMDAgbiAKMDAwMDAwMDIwOSAwMDAwMCBuIAowMDAwMDAwMzIxIDAwMDAwIG4gCjAwMDAwMDA1MjUgMDAwMDAgbiAKMDAwMDAwMDcyOSAwMDAwMCBuIAowMDAwMDAwOTMzIDAwMDAwIG4gCjAwMDAwMDEwMDEgMDAwMDAgbiAKMDAwMDAwMTI2MiAwMDAwMCBuIAowMDAwMDAxMzMzIDAwMDAwIG4gCjAwMDAwMDM5MTkgMDAwMDAgbiAKMDAwMDAwNTc3MCAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9JRCAKWzw5MzcwMTAyNDc2N2JjZTIzNTE0MmQ3NzE1ODYwMjk0OD48OTM3MDEwMjQ3NjdiY2UyMzUxNDJkNzcxNTg2MDI5NDg+XQolIFJlcG9ydExhYiBnZW5lcmF0ZWQgUERGIGRvY3VtZW50IC0tIGRpZ2VzdCAob3BlbnNvdXJjZSkKCi9JbmZvIDggMCBSCi9Sb290IDcgMCBSCi9TaXplIDEzCj4+CnN0YXJ0eHJlZgo3NTQxCiUlRU9GCg==";
-window.K2L_LICENCE_B64 = "JVBERi0xLjQKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSIC9GMiAzIDAgUiAvRjMgNCAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL0Jhc2VGb250IC9IZWx2ZXRpY2EgL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcgL05hbWUgL0YxIC9TdWJ0eXBlIC9UeXBlMSAvVHlwZSAvRm9udAo+PgplbmRvYmoKMyAwIG9iago8PAovQmFzZUZvbnQgL0hlbHZldGljYS1Cb2xkIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nIC9OYW1lIC9GMiAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjQgMCBvYmoKPDwKL0Jhc2VGb250IC9IZWx2ZXRpY2EtT2JsaXF1ZSAvRW5jb2RpbmcgL1dpbkFuc2lFbmNvZGluZyAvTmFtZSAvRjMgL1N1YnR5cGUgL1R5cGUxIC9UeXBlIC9Gb250Cj4+CmVuZG9iago1IDAgb2JqCjw8Ci9Db250ZW50cyA5IDAgUiAvTWVkaWFCb3ggWyAwIDAgNTk1LjI3NTYgODQxLjg4OTggXSAvUGFyZW50IDggMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjYgMCBvYmoKPDwKL1BhZ2VNb2RlIC9Vc2VOb25lIC9QYWdlcyA4IDAgUiAvVHlwZSAvQ2F0YWxvZwo+PgplbmRvYmoKNyAwIG9iago8PAovQXV0aG9yIChhbm9ueW1vdXMpIC9DcmVhdGlvbkRhdGUgKEQ6MjAyNjA4MDIxNDA5NTIrMDAnMDAnKSAvQ3JlYXRvciAoYW5vbnltb3VzKSAvS2V5d29yZHMgKCkgL01vZERhdGUgKEQ6MjAyNjA4MDIxNDA5NTIrMDAnMDAnKSAvUHJvZHVjZXIgKFJlcG9ydExhYiBQREYgTGlicmFyeSAtIFwob3BlbnNvdXJjZVwpKSAKICAvU3ViamVjdCAodW5zcGVjaWZpZWQpIC9UaXRsZSAodW50aXRsZWQpIC9UcmFwcGVkIC9GYWxzZQo+PgplbmRvYmoKOCAwIG9iago8PAovQ291bnQgMSAvS2lkcyBbIDUgMCBSIF0gL1R5cGUgL1BhZ2VzCj4+CmVuZG9iago5IDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDE1NjQKPj4Kc3RyZWFtCkdhdTBFPkFyNHQmOldlRGJnV1RaOSUuanI0QjNxUDttWlpXNWBtUGhgPSEvYUFUNjNjPHIpSjEpaSYycUQobjlgTCllTmVoZ0JLV2pxblNlPzlKNkxSSzw9REtbNCFjRHVtaV1pIUwyLTN0TWY+YUpCVlQiKjEuZjFQIW42K1o2J1pgZ2dxU2BaXU9JWys/Xy0ySUloN2BpT3FQSnFtLV1nb0xMWUYwaSMnOHEsdG0tS3NAIiEyO0ovK2NRS0IvMzZIJ0JDT21LVFwwY0ItWVc0YysoPXB0JHBTPTQoS2MqJ1BNclFCWnRqP1JNZytUUmpRXGxtZiRnYkBuRClEY15PPiMtaEVsOTsjUjVwblRLPjouLV1WXi4oKEs0X3EnUWRWIl1LU1M0UW8vMWgkVWBxITwuTExuKllQI2g5OChUSzMjMSpGNnI3TGgicy5GOFdLc2BpcnV1ZCdBUEwkUkhLKT9wTzNbQFJwYWxiRzZVLWhkOy5kJCJTQEZPVnMpcyIvJiMmMUNSQjBCU3RbUEc2YSleWlRpI24lPEBDVGwwXi9iNmMwWUxGUkU1SS1nQkpTa15WJFxiQ0ZFRickO1dTc09eUUkyV19rJEQtOF9DOmhNdSwpQktWK1AnSyVfZWJCNSkpMzE+TkQjZUp0R1dtJzlZTDY+SEYjM21SMWVccDZmOSVAYGBgXVRWT2BROmM7PFtZIjNqZHUrUFlXY2QlMCVyZGhBOU9PP1NSYEVlVm9jUyZEOTdbKUNXUSsxW1AiPSxSRUdwJ2tCV2Faam5XWmI6TzE+SExiSSpIRWkqVTJeNmUpLmlCM1Z1QnIqRHE3PTA8Z1FhQmEvcCJhSCFVIWN0Zy5sIm82ZFVxPVg/QDE+OG02YHNmZW9EL0A5LCw3YiRMb11iQiguaSkzN0orVVovTnVRW00rZWQ2LSpNc1VPQiYrQlEmdD9QPmdxSGUmY1xRYFhrcDlkPGxZRTtdNzZecShgazwzS0VvPFUrMnFjM0xaK1NoPlJaYXFyVGdbIl9BRjhDMlw3KD0nWkc1VSU9S1IoSjhfcjlUPjJQW0dGUnBoNjNrPUw/QzdeTl0zdCMsVWxSN08hW0hwIW0oTyw3dXUrcio1UUIwJUFAc11QWWMrPXEpTT1aV2NRQ2IzZFU9MT47YyhfL1Away5NVjpvVUZDbj4mITJfbFBQIXFiM3E1Km5vWGRWbFIqcjVbcThWXWw/Zy5GPjg9bDgiY0MxcHMvPyhILjE+RjNgPDEtYlRGSUc0KS1AZUdLOChGQFpbSz1PQE1mWGdCLWs6W0NrYSU8anVBbFAhMm4vNF47MypIbHUzLWwodDkzPE9GSSUyaFFsUDIjSjtMLmpfZzpYZldyTzBLak5EXkdZOHAwXjNSNmFQQT5ILiE1cVMoUXIlYm5bN1pORzpdaCJMVTM/aV0pOWNJJm1xSm1GXlVzNjxUIk9jZXQpMWInXWpjL0cnbGNzYC0jOnFMJWBJTWJmLlhSTHNEVTZnciInI0xRRXB1VVxaaDgjQTgobklLXHBEKzAtVUZCLy1xKCp0VGp1M2wmZG9XVjpqdWovZk1AM0NqM0hGVUA/NT1pYmdQaU9BN2BoTCIoL0d0MyE5S2g9QnEvNHRVdFUjdVM6WWJRYmlvNSJBTzAzXFVTai9TIyxzMiMuMVNZME8vOz1dTk1MS3IkPCU6X1E6bk9wbzs2VkE5J3FhZW48SlZ0QDZjQDEmXidbbDwyLGFFWSk2LixsOlFaPmRRWXQpKzw9bWNlQFtEKWJuT28oJVJLTydaO2UvbkwwWmRiXk1CT1c7LWswNUdKOVUvW2ozIkpNSFJbZF1gbkc8a2ppL25JWEZLckk5UVtDXj8+T2plLC8ibTFUI0BmUkd0Ti1qVko4RmRTLFljY2xDKi4nTSVHSWtvQEAzRjc6cSk0WFFATEkhV0dnNE0oU2NhS3JNViUhZjldXXQtPV1MVEFuNEMtI1RrYz5pSDM1Rmp1Li5DO1gkR0dqZzk3blZfVylXP1RsZnQ1RlYsY1ViQ0xqT25MQlgqUFUuMVJfKnA6czZNSypGL10hVl9ucmYpfj5lbmRzdHJlYW0KZW5kb2JqCnhyZWYKMCAxMAowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwNjEgMDAwMDAgbiAKMDAwMDAwMDExMiAwMDAwMCBuIAowMDAwMDAwMjE5IDAwMDAwIG4gCjAwMDAwMDAzMzEgMDAwMDAgbiAKMDAwMDAwMDQ0NiAwMDAwMCBuIAowMDAwMDAwNjQ5IDAwMDAwIG4gCjAwMDAwMDA3MTcgMDAwMDAgbiAKMDAwMDAwMDk3OCAwMDAwMCBuIAowMDAwMDAxMDM3IDAwMDAwIG4gCnRyYWlsZXIKPDwKL0lEIApbPDlhN2I5ZTU4YmY5YjAwZmE1NDdkZGYwYzgzZjNhNDBlPjw5YTdiOWU1OGJmOWIwMGZhNTQ3ZGRmMGM4M2YzYTQwZT5dCiUgUmVwb3J0TGFiIGdlbmVyYXRlZCBQREYgZG9jdW1lbnQgLS0gZGlnZXN0IChvcGVuc291cmNlKQoKL0luZm8gNyAwIFIKL1Jvb3QgNiAwIFIKL1NpemUgMTAKPj4Kc3RhcnR4cmVmCjI2OTIKJSVFT0YK";
-window.K2L_FEEDBACK_B64 = "JVBERi0xLjQKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSIC9GMiAzIDAgUiAvRjMgNCAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL0Jhc2VGb250IC9IZWx2ZXRpY2EgL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcgL05hbWUgL0YxIC9TdWJ0eXBlIC9UeXBlMSAvVHlwZSAvRm9udAo+PgplbmRvYmoKMyAwIG9iago8PAovQmFzZUZvbnQgL0hlbHZldGljYS1Cb2xkIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nIC9OYW1lIC9GMiAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjQgMCBvYmoKPDwKL0Jhc2VGb250IC9IZWx2ZXRpY2EtT2JsaXF1ZSAvRW5jb2RpbmcgL1dpbkFuc2lFbmNvZGluZyAvTmFtZSAvRjMgL1N1YnR5cGUgL1R5cGUxIC9UeXBlIC9Gb250Cj4+CmVuZG9iago1IDAgb2JqCjw8Ci9Db250ZW50cyA5IDAgUiAvTWVkaWFCb3ggWyAwIDAgNTk1LjI3NTYgODQxLjg4OTggXSAvUGFyZW50IDggMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjYgMCBvYmoKPDwKL1BhZ2VNb2RlIC9Vc2VOb25lIC9QYWdlcyA4IDAgUiAvVHlwZSAvQ2F0YWxvZwo+PgplbmRvYmoKNyAwIG9iago8PAovQXV0aG9yIChhbm9ueW1vdXMpIC9DcmVhdGlvbkRhdGUgKEQ6MjAyNjA4MDIxNDA5NTIrMDAnMDAnKSAvQ3JlYXRvciAoYW5vbnltb3VzKSAvS2V5d29yZHMgKCkgL01vZERhdGUgKEQ6MjAyNjA4MDIxNDA5NTIrMDAnMDAnKSAvUHJvZHVjZXIgKFJlcG9ydExhYiBQREYgTGlicmFyeSAtIFwob3BlbnNvdXJjZVwpKSAKICAvU3ViamVjdCAodW5zcGVjaWZpZWQpIC9UaXRsZSAodW50aXRsZWQpIC9UcmFwcGVkIC9GYWxzZQo+PgplbmRvYmoKOCAwIG9iago8PAovQ291bnQgMSAvS2lkcyBbIDUgMCBSIF0gL1R5cGUgL1BhZ2VzCj4+CmVuZG9iago5IDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDE1OTkKPj4Kc3RyZWFtCkdhdTEwZ01ZYjgmO0taUCdRXVpGbTxbKjZNZEBlaW0wTC5zNVtyMVhhOjA8QVkkLVo7LitxMks1IXI0MWFiUSVcKCc3MCYySjlmI0JFJy1TQDZqQSVudDFndF5ySSFdMCxRQVFpPmpVRCxfWGJcS0k7RVpfaig7P1pudF9hJl86dXIrTUMhMm41US83QEZnIU1NSyM9SShkU1MsYF4oTlxoMXExVi8taSdDWV1fKiZmPi84WF5kIy5nTGdsJFhUZkg0aUxjKV5BKVciYSdVSWk4KUtAK04rKmw8Q0xyL2RKYEI2QUpuOSQ0Kk4nUEtvJU8zQzU0akQ0JnVMU25uM25xR0ElaiJLSDctJmghWD9wOz0zLUszcDByNCtePVYnLTZuPlwuJldfUG9AXG9cX2Q/Ki8rRHUiTXNvU2RGZjc+OVA2O0QnbzVmQkMmdTdlQzk1QEs2K0wtbEVfWGFtZEZub2JPcUsuPSI4a0Q9QiVeTC08Lkc9ckpYQVAwVFQ1RUMwWTlGailTVT9UMihzJFo9aXE0TWhGZ1BFYFxPPHIxX1VgXDxCTkMtPTsxKTNBJTNCclonKS5TS1FuNmg4JVRUYmQ1cF1kXTY6LSJbY0EkQElsbDVkRWkwWlZCI1FxdGdIO0BmKGYiS1xEbiFuYSFvXTJxYzVIczxMbk9QMiNrZFgnbGkxWkEwX0h1SktESypGSGApN0VaP003TVhIXTJjJig+M1tgOUg2QGhfNFcnSiVhXVI/ZzsiUDBPZTI0XjFMTWhxLm9qKCUiXl0uI0lBRCgzPT88NSdPWEpnTDBfP11mTjE8UEk/SSw4UDNJVmwzN1Q7M2QqOzZ0XjE2WE8sXVM0REwjci5TaClyW0IzOCs2MyQ5c1FjMEIxTGhoZ1UiMlhTM1pmO0AhMjMjJ1U8XStJc1hGPjYuJihYNzViKVRvKnFnNiFjITJSRFklWz0+IjBeQUE1TlpaKUFHTi1zQ045PE9DU1pTJztrW0hdT2M4O2ssdGloL15VMVIza1RfIi5CVWwzPSJAOylRRGlBZ1smKTk0Jm5YVUNsLGJKQjRrSzRrYz9RYThoO2NMXUhaPmVKSkRAdCY6JW5WUV46bSU3P2kkL0I5J1A9VT9JSV9qbzNdcidpP3VjLGkyJ0smUzVUQ01kQksxRGtTbSpaLUtgYlhiS3RiPWJjKFhbZClROiRGYSluTU4xSyFdLSI4Zks0VkBFVjJwTlRnOmsmUFEuPGVpcjVHX29XdUxENkxBKSdZM2tiZE5oc3Qocy8na1tJcWpaRnFBRWlxK0E6Tj9cS3JmW1pKZkpOUS5KKV5LaG5EVGgvKD82Imw3cFMjXklgbEsycGozPlVfLnAmJlpzMmtKLF5pPCpTcihzaU9LN0M5NFhwTl5hQHRTWj4nRzhhOG8jTi1ZMiQ5UlpJVz9KNjBnbCNyRWUxMV1hNTFGVkFGVCVXKTlzJjRwak5oZChkKFJeSU4mX2wmajVfWSk7a1xSInM9NHFpU2ZnZiZbKGNQXVNMZzdkKmwkPF5OSCNzI2Z0NHM9Xy0yXiZFLmheYDVLcj9nUypsaGNAOlhsImRPQlJPU0MrdUFbSCE3SW05W0MjcUphbF8+LV46aiI4TiVeL1s+LHFMaD88VG8vUVpBYmByQmNnSURhRihVXWlXOnRvSVwvYFZZOkkkUl9Bc1lodDE0dS8oOnNNTFJNUTE7XjFbO240QD4wZictLCc3XVI5QmhdTGoiKSgxPUNZIiomV1UhMGsvQU5eIzRAIV0jOFEwQjZIIiRIJTlaMWBRdEVJZC9hMTAwXVowRmknNzpXRCxZJUU+OihPIytlO1hEaHJwQEsmKGshWE0jTS1eU2xbVmYzQFJUQWJqcWxtZUxMOjdGJnRER3JuRydzViImKUdTYSRyYzxKOjNSJGVNcEpYQ3QxZmxTL2NdZjk7VDkkbltGPkNGXlpmdDFCT0lsM2wqbk1tVW9WZXVnXjBlLDdwPCE9JDBfOjtZYl0pUi9PUy83Smc5ZU51XDhUREtkSyNWNExCJDRLSFslXFxoQyRfPTEkcTNKNEchUFJAaV05SmZiMHF0PmdJVWtccTxxaz09MjVZaFtoREVQPislNCNzS1hyam9+PmVuZHN0cmVhbQplbmRvYmoKeHJlZgowIDEwCjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDA2MSAwMDAwMCBuIAowMDAwMDAwMTEyIDAwMDAwIG4gCjAwMDAwMDAyMTkgMDAwMDAgbiAKMDAwMDAwMDMzMSAwMDAwMCBuIAowMDAwMDAwNDQ2IDAwMDAwIG4gCjAwMDAwMDA2NDkgMDAwMDAgbiAKMDAwMDAwMDcxNyAwMDAwMCBuIAowMDAwMDAwOTc4IDAwMDAwIG4gCjAwMDAwMDEwMzcgMDAwMDAgbiAKdHJhaWxlcgo8PAovSUQgCls8Y2VjODFhYTFjNWY3YThhMTJjODJmNmVlZjljYjE2M2Q+PGNlYzgxYWExYzVmN2E4YTEyYzgyZjZlZWY5Y2IxNjNkPl0KJSBSZXBvcnRMYWIgZ2VuZXJhdGVkIFBERiBkb2N1bWVudCAtLSBkaWdlc3QgKG9wZW5zb3VyY2UpCgovSW5mbyA3IDAgUgovUm9vdCA2IDAgUgovU2l6ZSAxMAo+PgpzdGFydHhyZWYKMjcyNwolJUVPRgo=";
-window.K2L_MANIFEST = {
-  "assessment": {
-    "pageHeight": 841.8897637795277,
-    "fields": {
-      "delegateName": {
-        "page": 0,
-        "x": 141.73228346456693,
-        "y": 720.0
-      },
-      "location": {
-        "page": 0,
-        "x": 141.73228346456693,
-        "y": 688.8
-      },
-      "courseName": {
-        "page": 0,
-        "x": 141.73228346456693,
-        "y": 657.6
-      },
-      "date": {
-        "page": 0,
-        "x": 394.0157480314961,
-        "y": 720.0
-      },
-      "trainerName": {
-        "page": 0,
-        "x": 394.0157480314961,
-        "y": 688.8
-      },
-      "employer": {
-        "page": 0,
-        "x": 394.0157480314961,
-        "y": 657.6
-      },
-      "vehicleReg": {
-        "page": 0,
-        "x": 141.73228346456693,
-        "y": 600.9
-      },
-      "vehicleMakeModel": {
-        "page": 0,
-        "x": 266.45669291338584,
-        "y": 600.9
-      },
-      "odoOpening": {
-        "page": 0,
-        "x": 391.1811023622048,
-        "y": 600.9
-      },
-      "odoClosing": {
-        "page": 0,
-        "x": 515.9055118110236,
-        "y": 600.9
-      },
-      "pre_walkaround": {
-        "page": 0,
-        "commentX": 277.8,
-        "commentY": 534.3,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 528.0
-      },
-      "pre_cockpit": {
-        "page": 0,
-        "commentX": 277.8,
-        "commentY": 507.4,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 501.0
-      },
-      "pre_dashboard": {
-        "page": 0,
-        "commentX": 277.8,
-        "commentY": 480.5,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 474.1
-      },
-      "pre_load": {
-        "page": 0,
-        "commentX": 277.8,
-        "commentY": 453.5,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 447.2
-      },
-      "speed_legal": {
-        "page": 0,
-        "commentX": 277.8,
-        "commentY": 379.8,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 370.6
-      },
-      "speed_conditions": {
-        "page": 0,
-        "commentX": 277.8,
-        "commentY": 347.2,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 338.0
-      },
-      "positioning_approach": {
-        "page": 0,
-        "commentX": 277.8,
-        "commentY": 314.6,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 305.4
-      },
-      "lane_discipline": {
-        "page": 0,
-        "commentX": 277.8,
-        "commentY": 282.0,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 272.8
-      },
-      "hazard_id": {
-        "page": 0,
-        "commentX": 277.8,
-        "commentY": 202.7,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 193.5
-      },
-      "anticipation": {
-        "page": 0,
-        "commentX": 277.8,
-        "commentY": 170.1,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 160.9
-      },
-      "vru_awareness": {
-        "page": 0,
-        "commentX": 277.8,
-        "commentY": 137.5,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 128.3
-      },
-      "site_hazards": {
-        "page": 0,
-        "commentX": 277.8,
-        "commentY": 104.9,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 95.7
-      },
-      "following_distance": {
-        "page": 1,
-        "commentX": 277.8,
-        "commentY": 707.2,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 698.0
-      },
-      "space_obstructions": {
-        "page": 1,
-        "commentX": 277.8,
-        "commentY": 674.6,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 665.4
-      },
-      "all_round_obs": {
-        "page": 1,
-        "commentX": 277.8,
-        "commentY": 642.0,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 632.8
-      },
-      "low_speed_control": {
-        "page": 1,
-        "commentX": 277.8,
-        "commentY": 562.7,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 553.5
-      },
-      "reversing_parking": {
-        "page": 1,
-        "commentX": 277.8,
-        "commentY": 530.1,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 520.9
-      },
-      "vehicle_control": {
-        "page": 1,
-        "commentX": 277.8,
-        "commentY": 497.5,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 488.3
-      },
-      "signal_timing": {
-        "page": 1,
-        "commentX": 277.8,
-        "commentY": 418.1,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 408.9
-      },
-      "response_others": {
-        "page": 1,
-        "commentX": 277.8,
-        "commentY": 385.5,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 376.3
-      },
-      "horn_lights": {
-        "page": 1,
-        "commentX": 277.8,
-        "commentY": 352.9,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 343.7
-      },
-      "signs_compliance": {
-        "page": 2,
-        "commentX": 277.8,
-        "commentY": 707.2,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 698.0
-      },
-      "professional_conduct": {
-        "page": 2,
-        "commentX": 277.8,
-        "commentY": 674.6,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 665.4
-      },
-      "post_drive_handover": {
-        "page": 2,
-        "commentX": 277.8,
-        "commentY": 642.0,
-        "commentWidth": 198.4,
-        "scoreX": 513.1,
-        "scoreY": 632.8
-      },
-      "totalScore": {
-        "page": 2,
-        "x": 187.1,
-        "y": 564.1
-      },
-      "trainerComments": {
-        "page": 2,
-        "x": 59.5,
-        "yTop": 490.4,
-        "width": 476.2
-      },
-      "delegateSignature": {
-        "page": 2,
-        "x": 56.7,
-        "y": 348.7,
-        "width": 226.8,
-        "height": 34.0
-      },
-      "trainerSignature": {
-        "page": 2,
-        "x": 311.8,
-        "y": 348.7,
-        "width": 226.8,
-        "height": 34.0
-      }
-    },
-    "sections": {},
-    "scoreBands": [
-      {
-        "min": 20,
-        "max": 39,
-        "x": 249.4,
-        "y": 547.1,
-        "w": 68.0,
-        "h": 42.51968503937008
-      },
-      {
-        "min": 40,
-        "max": 49,
-        "x": 323.1,
-        "y": 547.1,
-        "w": 68.0,
-        "h": 42.51968503937008
-      },
-      {
-        "min": 50,
-        "max": 60,
-        "x": 396.9,
-        "y": 547.1,
-        "w": 68.0,
-        "h": 42.51968503937008
-      },
-      {
-        "min": 61,
-        "max": 80,
-        "x": 470.6,
-        "y": 547.1,
-        "w": 68.0,
-        "h": 42.51968503937008
-      }
-    ],
-    "totalScoredItems": 20
-  },
-  "licence": {
-    "pageHeight": 841.8897637795277,
-    "fields": {
-      "delegateName": {
-        "page": 0,
-        "x": 141.7,
-        "y": 720.0
-      },
-      "employer": {
-        "page": 0,
-        "x": 141.7,
-        "y": 688.8
-      },
-      "location": {
-        "page": 0,
-        "x": 141.7,
-        "y": 657.6
-      },
-      "employeeNo": {
-        "page": 0,
-        "x": 394.0,
-        "y": 720.0
-      },
-      "managerName": {
-        "page": 0,
-        "x": 394.0,
-        "y": 688.8
-      },
-      "date": {
-        "page": 0,
-        "x": 394.0,
-        "y": 657.6
-      },
-      "originalLicencePresented": {
-        "page": 0,
-        "yesX": 464.9,
-        "noX": 515.9,
-        "y": 596.1
-      },
-      "fullValidLicence": {
-        "page": 0,
-        "yesX": 464.9,
-        "noX": 515.9,
-        "y": 564.9
-      },
-      "licenceNumber": {
-        "page": 0,
-        "x": 141.7,
-        "y": 532.9
-      },
-      "licenceValidTo": {
-        "page": 0,
-        "x": 394.0,
-        "y": 532.9
-      },
-      "issueNumber": {
-        "page": 0,
-        "x": 518.7,
-        "y": 532.9
-      },
-      "endorsements": {
-        "page": 0,
-        "x": 59.5,
-        "yTop": 496.1,
-        "width": 476.2
-      },
-      "hasCpc": {
-        "page": 0,
-        "yesX": 464.9,
-        "noX": 515.9,
-        "y": 369.4
-      },
-      "hasTacho": {
-        "page": 0,
-        "yesX": 464.9,
-        "noX": 515.9,
-        "y": 338.2
-      },
-      "driverCardNumber": {
-        "page": 0,
-        "x": 141.7,
-        "y": 306.1
-      },
-      "comments": {
-        "page": 0,
-        "x": 59.5,
-        "yTop": 252.3,
-        "width": 476.2
-      }
-    },
-    "vocationalCats": {
-      "C1": {
-        "x": 53.0,
-        "y": 408.2,
-        "w": 57.7,
-        "h": 17.0
-      },
-      "C1+E": {
-        "x": 114.7,
-        "y": 408.2,
-        "w": 57.7,
-        "h": 17.0
-      },
-      "C": {
-        "x": 176.3,
-        "y": 408.2,
-        "w": 57.7,
-        "h": 17.0
-      },
-      "C+E": {
-        "x": 238.0,
-        "y": 408.2,
-        "w": 57.7,
-        "h": 17.0
-      },
-      "D1": {
-        "x": 299.6,
-        "y": 408.2,
-        "w": 57.7,
-        "h": 17.0
-      },
-      "D1+E": {
-        "x": 361.3,
-        "y": 408.2,
-        "w": 57.7,
-        "h": 17.0
-      },
-      "D": {
-        "x": 422.9,
-        "y": 408.2,
-        "w": 57.7,
-        "h": 17.0
-      },
-      "D+E": {
-        "x": 484.6,
-        "y": 408.2,
-        "w": 57.7,
-        "h": 17.0
-      }
-    }
-  },
-  "feedback": {
-    "pageHeight": 841.8897637795277,
-    "fields": {
-      "delegateName": {
-        "page": 0,
-        "x": 141.7,
-        "y": 734.2
-      },
-      "courseName": {
-        "page": 0,
-        "x": 141.7,
-        "y": 703.0
-      },
-      "date": {
-        "page": 0,
-        "x": 394.0,
-        "y": 734.2
-      },
-      "trainerName": {
-        "page": 0,
-        "x": 394.0,
-        "y": 703.0
-      },
-      "venue": {
-        "page": 0,
-        "y": 630.7,
-        "positions": {
-          "1": 326.0,
-          "2": 371.3,
-          "3": 416.7,
-          "4": 462.0,
-          "5": 507.4
-        }
-      },
-      "clarity": {
-        "page": 0,
-        "y": 593.9,
-        "positions": {
-          "1": 326.0,
-          "2": 371.3,
-          "3": 416.7,
-          "4": 462.0,
-          "5": 507.4
-        }
-      },
-      "practical_value": {
-        "page": 0,
-        "y": 557.0,
-        "positions": {
-          "1": 326.0,
-          "2": 371.3,
-          "3": 416.7,
-          "4": 462.0,
-          "5": 507.4
-        }
-      },
-      "professionalism": {
-        "page": 0,
-        "y": 520.2,
-        "positions": {
-          "1": 326.0,
-          "2": 371.3,
-          "3": 416.7,
-          "4": 462.0,
-          "5": 507.4
-        }
-      },
-      "knowledge": {
-        "page": 0,
-        "y": 483.3,
-        "positions": {
-          "1": 326.0,
-          "2": 371.3,
-          "3": 416.7,
-          "4": 462.0,
-          "5": 507.4
-        }
-      },
-      "overall": {
-        "page": 0,
-        "y": 446.5,
-        "positions": {
-          "1": 326.0,
-          "2": 371.3,
-          "3": 416.7,
-          "4": 462.0,
-          "5": 507.4
-        }
-      },
-      "threePoints": {
-        "page": 0,
-        "x": 59.5,
-        "yTop": 388.3,
-        "width": 476.2
-      },
-      "comments": {
-        "page": 0,
-        "x": 59.5,
-        "yTop": 300.5,
-        "width": 476.2
-      },
-      "sessionTimes": {
-        "page": 0,
-        "x": 394.0,
-        "y": 181.4
-      },
-      "delegateSignature": {
-        "page": 0,
-        "x": 56.7,
-        "y": 178.6,
-        "width": 229.6,
-        "height": 22.7
-      }
-    }
-  }
-};
-</script>
-<script>
-/* ============================================================
-   Keane2Learn Driving Assessment — core logic
-   ============================================================ */
-
-const { PDFDocument, rgb, StandardFonts } = PDFLib;
-
-function wrapText(text, font, size, maxWidth) {
-  if (!text) return [];
-  const words = String(text).trim().split(/\s+/);
-  const lines = [];
-  let line = '';
-  for (const w of words) {
-    const test = line ? line + ' ' + w : w;
-    if (font.widthOfTextAtSize(test, size) > maxWidth && line) {
-      lines.push(line);
-      line = w;
-    } else {
-      line = test;
-    }
-  }
-  if (line) lines.push(line);
-  return lines;
-}
-
-function drawWrapped(page, text, x, yTop, size, font, maxWidth, maxLines, lineGap) {
-  const lines = wrapText(text, font, size, maxWidth).slice(0, maxLines || 99);
-  let y = yTop;
-  for (const l of lines) {
-    page.drawText(l, { x, y, size, font, color: rgb(0.05, 0.05, 0.15) });
-    y -= (lineGap || (size + 2));
-  }
-  return y;
-}
-
-function dataUrlToBytes(dataUrl) {
-  const base64 = dataUrl.split(',')[1];
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
-}
-
-async function drawSignature(doc, page, dataUrl, x, y, width, height) {
-  if (!dataUrl) return;
-  const bytes = dataUrlToBytes(dataUrl);
-  const img = await doc.embedPng(bytes);
-  const dims = img.scaleToFit(width, height);
-  page.drawImage(img, { x, y, width: dims.width, height: dims.height });
-}
-
-function todayStr() {
-  const d = new Date();
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yy = String(d.getFullYear()).slice(-2);
-  return `${dd}/${mm}/${yy}`;
-}
-
-/* Manifest is injected as window.K2L_MANIFEST (see shell.html) */
-const M = window.K2L_MANIFEST;
-
-const SCORE_KEYS = [
-  'pre_walkaround','pre_cockpit','pre_dashboard','pre_load',
-  'speed_legal','speed_conditions','positioning_approach','lane_discipline',
-  'hazard_id','anticipation','vru_awareness','site_hazards',
-  'following_distance','space_obstructions','all_round_obs',
-  'low_speed_control','reversing_parking','vehicle_control',
-  'signal_timing','response_others','horn_lights',
-  'signs_compliance','professional_conduct','post_drive_handover',
-];
-const SCORED_ONLY_KEYS = SCORE_KEYS.filter(k => !k.startsWith('pre_'));
-
-async function loadTemplate(b64) {
-  return PDFDocument.load(b64);
-}
-
-async function generateAssessmentPdf(data) {
-  const doc = await loadTemplate(window.K2L_ASSESS_B64);
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const pages = doc.getPages();
-  const F = M.assessment.fields;
-
-  function textField(key, value, size) {
-    const f = F[key];
-    if (!f || !value) return;
-    pages[f.page].drawText(String(value), { x: f.x, y: f.y, size: size || 9, font });
-  }
-
-  textField('delegateName', data.delegateName);
-  textField('date', data.date);
-  textField('location', data.location);
-  textField('trainerName', data.trainerName);
-  textField('courseName', data.courseName);
-  textField('employer', data.employer);
-  textField('vehicleReg', data.vehicleReg, 8.5);
-  textField('vehicleMakeModel', data.vehicleMakeModel, 8.5);
-  textField('odoOpening', data.odoOpening, 8.5);
-  textField('odoClosing', data.odoClosing, 8.5);
-
-  let total = 0;
-  let hasLow = false;
-  for (const key of SCORE_KEYS) {
-    const f = F[key];
-    if (!f) continue;
-    const entry = (data.scores && data.scores[key]) || {};
-    const page = pages[f.page];
-    if (entry.comment) {
-      drawWrapped(page, entry.comment, f.commentX, f.commentY, 6.8, font, f.commentWidth, 2, 7.2);
-    }
-    if (entry.grade && !key.startsWith('pre_')) {
-      page.drawText(String(entry.grade), { x: f.scoreX - 2, y: f.scoreY, size: 9.5, font: bold });
-      total += Number(entry.grade);
-      if (Number(entry.grade) === 1) hasLow = true;
-    } else if (entry.grade) {
-      page.drawText(String(entry.grade), { x: f.scoreX - 2, y: f.scoreY, size: 9.5, font: bold });
-    }
-  }
-
-  const tsField = F.totalScore;
-  pages[tsField.page].drawText(String(total), { x: tsField.x, y: tsField.y, size: 11, font: bold });
-
-  const band = M.assessment.scoreBands.find(b => total >= b.min && total <= b.max) || M.assessment.scoreBands[0];
-  const bandPage = pages[tsField.page];
-  bandPage.drawRectangle({
-    x: band.x, y: band.y, width: band.w, height: band.h,
-    borderColor: rgb(0.75, 0, 0), borderWidth: 1.6,
-  });
-
-  const tc = F.trainerComments;
-  drawWrapped(pages[tc.page], data.trainerComments || '', tc.x, tc.yTop, 9, font, tc.width, 6, 11.5);
-
-  const ds = F.delegateSignature;
-  const ts = F.trainerSignature;
-  await drawSignature(doc, pages[ds.page], data.delegateSignatureDataUrl, ds.x, ds.y, ds.width, ds.height);
-  await drawSignature(doc, pages[ts.page], data.trainerSignatureDataUrl, ts.x, ts.y, ts.width, ts.height);
-
-  return doc.save();
-}
-
-async function generateLicencePdf(data) {
-  const doc = await loadTemplate(window.K2L_LICENCE_B64);
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const page = doc.getPages()[0];
-  const F = M.licence.fields;
-  const circleColor = rgb(0.75, 0, 0);
-
-  function textField(key, value, size) {
-    const f = F[key];
-    if (!f || !value) return;
-    page.drawText(String(value), { x: f.x, y: f.y, size: size || 9, font });
-  }
-
-  textField('delegateName', data.delegateName);
-  textField('employer', data.employer);
-  textField('location', data.location);
-  textField('employeeNo', data.employeeNo);
-  textField('managerName', data.managerName);
-  textField('date', data.date);
-  textField('licenceNumber', data.licenceNumber, 8);
-  textField('licenceValidTo', data.licenceValidTo);
-  textField('issueNumber', data.issueNumber);
-  textField('driverCardNumber', data.driverCardNumber, 8);
-
-  function circleYesNo(key, value) {
-    const f = F[key];
-    if (!f || !value) return;
-    const x = value === 'yes' ? f.yesX : f.noX;
-    page.drawEllipse({ x, y: f.y + 3, xScale: 14, yScale: 8, borderColor: circleColor, borderWidth: 1.3 });
-  }
-  circleYesNo('originalLicencePresented', data.originalLicencePresented);
-  circleYesNo('fullValidLicence', data.fullValidLicence);
-  circleYesNo('hasCpc', data.hasCpc);
-  circleYesNo('hasTacho', data.hasTacho);
-
-  if (data.vocationalCats && data.vocationalCats.length) {
-    for (const cat of data.vocationalCats) {
-      const box = M.licence.vocationalCats[cat];
-      if (box) {
-        page.drawEllipse({ x: box.x + box.w/2, y: box.y + box.h/2, xScale: box.w/2 + 3, yScale: box.h/2 + 2, borderColor: circleColor, borderWidth: 1.3 });
-      }
-    }
-  }
-
-  const end = F.endorsements;
-  drawWrapped(page, data.endorsements || '', end.x, end.yTop, 8.5, font, end.width, 5, 10.5);
-  const com = F.comments;
-  drawWrapped(page, data.licenceComments || '', com.x, com.yTop, 8.5, font, com.width, 6, 10.5);
-
-  return doc.save();
-}
-
-async function generateFeedbackPdf(data) {
-  const doc = await loadTemplate(window.K2L_FEEDBACK_B64);
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const page = doc.getPages()[0];
-  const F = M.feedback.fields;
-  const circleColor = rgb(0.75, 0, 0);
-
-  function textField(key, value, size) {
-    const f = F[key];
-    if (!f || !value) return;
-    page.drawText(String(value), { x: f.x, y: f.y, size: size || 9, font });
-  }
-  textField('delegateName', data.delegateName);
-  textField('courseName', data.courseName);
-  textField('date', data.date);
-  textField('trainerName', data.trainerName);
-
-  const ratings = data.feedbackRatings || {};
-  for (const key of ['venue','clarity','practical_value','professionalism','knowledge','overall']) {
-    const f = F[key];
-    const val = ratings[key];
-    if (f && val) {
-      const cx = f.positions[String(val)];
-      page.drawEllipse({ x: cx, y: f.y + 3, xScale: 9, yScale: 8, borderColor: circleColor, borderWidth: 1.3 });
-    }
-  }
-
-  const tp = F.threePoints;
-  drawWrapped(page, data.threePoints || '', tp.x, tp.yTop, 9, font, tp.width, 4, 11.5);
-  const com = F.comments;
-  drawWrapped(page, data.feedbackComments || '', com.x, com.yTop, 9, font, com.width, 6, 11.5);
-
-  textField('sessionTimes', data.sessionTimes, 8.5);
-
-  const ds = F.delegateSignature;
-  await drawSignature(doc, page, data.delegateSignatureDataUrl, ds.x, ds.y, ds.width, ds.height);
-
-  return doc.save();
-}
-
-function downloadBytes(bytes, filename) {
-  const blob = new Blob([bytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-}
-
-window.K2L = {
-  generateAssessmentPdf, generateLicencePdf, generateFeedbackPdf, downloadBytes, todayStr,
-  SCORE_KEYS, SCORED_ONLY_KEYS,
-};
-
-</script>
-<script>
-/* ============================================================
-   Keane2Learn Driving Assessment — wizard UI
-   ============================================================ */
-
-const PREDRIVE_LABELS = {
-  pre_walkaround: 'Exterior walkaround & security check',
-  pre_cockpit: 'Cockpit familiarisation & controls',
-  pre_dashboard: 'Dashboard warning lights understood',
-  pre_load: 'Load / equipment security check',
-};
-
-const SEC_LABELS = {
-  sec_a: { title: 'Section A: Speed & Road Positioning', items: {
-    speed_legal: 'Legal speed compliance',
-    speed_conditions: 'Speed adjusted for conditions',
-    positioning_approach: 'Positioning on approach',
-    lane_discipline: 'Lane discipline',
-  }},
-  sec_b: { title: 'Section B: Hazard Awareness & Anticipation', items: {
-    hazard_id: 'Hazard identification',
-    anticipation: 'Anticipation & forward planning',
-    vru_awareness: 'Awareness of vulnerable road users',
-    site_hazards: 'Site-specific hazard awareness',
-  }},
-  sec_c: { title: 'Section C: Space Management', items: {
-    following_distance: 'Following distance',
-    space_obstructions: 'Space when passing obstructions',
-    all_round_obs: 'All-round observation',
-  }},
-  sec_d: { title: 'Section D: Manoeuvring & Vehicle Control', items: {
-    low_speed_control: 'Low-speed control',
-    reversing_parking: 'Reversing & parking',
-    vehicle_control: 'Overall vehicle control',
-  }},
-  sec_e: { title: 'Section E: Signalling & Communication', items: {
-    signal_timing: 'Signal timing & appropriateness',
-    response_others: 'Response to other road users',
-    horn_lights: 'Use of horn / lights to inform',
-  }},
-  sec_f: { title: 'Section F: Compliance & Professional Conduct', items: {
-    signs_compliance: 'Compliance with signs & markings',
-    professional_conduct: 'Professional conduct',
-    post_drive_handover: 'Post-drive handover',
-  }},
-};
-
-const RATING_LABELS = {
-  venue: 'Classroom session / venue',
-  clarity: 'Clarity of instruction',
-  practical_value: 'Value of on-road practical session',
-  professionalism: 'Trainer professionalism',
-  knowledge: 'Trainer knowledge',
-  overall: 'Overall experience',
-};
-
-const VOCATIONAL_CATS = ['C1', 'C1+E', 'C', 'C+E', 'D1', 'D1+E', 'D', 'D+E'];
-
-const STEPS = [
-  'home', 'session', 'vehicle',
-  'sec_a', 'sec_b', 'sec_c', 'sec_d', 'sec_e', 'sec_f',
-  'licence', 'trainerComments', 'feedback', 'signatures', 'review',
-  'account',
-];
+/* ------------------------------------------------------------
+   Config — fill these in from your Supabase project
+   (Dashboard > Project Settings > API)
+   ------------------------------------------------------------ */
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
 /* ------------------------------------------------------------
-   Storage layer — Supabase-backed
+   State
    ------------------------------------------------------------ */
-
-const SUPABASE_URL = 'https://mtvfcfbvzzrmnejjtrhs.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_Z6tVC44JpFuUZzDhtVg3uA_lIQH63FU';
-const TABLE = 'k2l_sessions';
+let centres = [];
+let passRates = {};   // centre_id -> [{period_label, tests_conducted, tests_passed}, ...]
+let reviews = {};     // centre_id -> [{rating, outcome, reviewer_role, comment, created_at}, ...]
+let view = 'list';
+let selectedId = null;
+let search = '';
+let regionFilter = '';
+let loaded = false;
 
 /* ------------------------------------------------------------
-   Auth state — persisted to localStorage (safe here since this
-   runs from a real hosted origin, not a sandboxed preview).
+   Supabase REST helpers
    ------------------------------------------------------------ */
-
-let auth = { accessToken: null, refreshToken: null, userId: null, email: null };
-let org = { id: null, name: null, logo: null };
-
-function loadAuthFromStorage() {
-  try {
-    const raw = localStorage.getItem('k2l_auth_v1');
-    if (raw) { auth = JSON.parse(raw); }
-    const rawOrg = localStorage.getItem('k2l_org_v1');
-    if (rawOrg) { org = JSON.parse(rawOrg); }
-  } catch (e) { /* ignore */ }
-}
-function saveAuthToStorage() {
-  try {
-    localStorage.setItem('k2l_auth_v1', JSON.stringify(auth));
-    localStorage.setItem('k2l_org_v1', JSON.stringify(org));
-  } catch (e) { /* ignore */ }
-}
-function clearAuthStorage() {
-  try { localStorage.removeItem('k2l_auth_v1'); localStorage.removeItem('k2l_org_v1'); } catch (e) {}
-}
-
-function authHeaders() {
-  return {
+function sbHeaders(extra) {
+  return Object.assign({
     'apikey': SUPABASE_ANON_KEY,
-    'Authorization': 'Bearer ' + (auth.accessToken || SUPABASE_ANON_KEY),
-    'Content-Type': 'application/json',
-  };
+    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+  }, extra || {});
 }
 
-async function authFetch(url, options) {
-  options = options || {};
-  const mergedHeaders = { ...authHeaders(), ...(options.headers || {}) };
-  let res = await fetch(url, { ...options, headers: mergedHeaders });
-  if (res.status === 401 && auth.refreshToken) {
-    const refreshed = await Auth.refresh();
-    if (refreshed) {
-      const retryHeaders = { ...authHeaders(), ...(options.headers || {}) };
-      res = await fetch(url, { ...options, headers: retryHeaders });
-    }
-  }
-  return res;
+async function sbGet(path) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: sbHeaders() });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
 }
 
-const Auth = {
-  async signup(email, password) {
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
-      method: 'POST',
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const body = await res.json();
-    if (!res.ok) throw new Error(body.msg || body.error_description || 'Sign up failed');
-    return body;
-  },
-  async login(email, password) {
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const body = await res.json();
-    if (!res.ok) throw new Error(body.msg || body.error_description || 'Login failed');
-    auth = { accessToken: body.access_token, refreshToken: body.refresh_token, userId: body.user.id, email: body.user.email };
-    saveAuthToStorage();
-    return body;
-  },
-  async refresh() {
-    if (!auth.refreshToken) return false;
-    try {
-      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-        method: 'POST',
-        headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: auth.refreshToken }),
-      });
-      const body = await res.json();
-      if (!res.ok) return false;
-      auth = { accessToken: body.access_token, refreshToken: body.refresh_token, userId: body.user.id, email: body.user.email };
-      saveAuthToStorage();
-      return true;
-    } catch (e) { return false; }
-  },
-  logout() {
-    auth = { accessToken: null, refreshToken: null, userId: null, email: null };
-    org = { id: null, name: null, logo: null };
-    clearAuthStorage();
-  },
-  async getMyOrg() {
-    if (!auth.accessToken) throw new Error('Not logged in — please log in again.');
-    const res = await authFetch(`${SUPABASE_URL}/rest/v1/k2l_org_members?select=org_id,role,k2l_organizations(id,name,logo_data_url,plan_status)&user_id=eq.${auth.userId}`);
-    if (!res.ok) return null;
-    const rows = await res.json();
-    if (!rows.length) return null;
-    const o = rows[0].k2l_organizations;
-    return { id: o.id, name: o.name, logo: o.logo_data_url, planStatus: o.plan_status };
-  },
-  async createOrg(name) {
-    if (!auth.accessToken) throw new Error('Not logged in — please log in again.');
-    const res = await authFetch(`${SUPABASE_URL}/rest/v1/rpc/create_organization`, {
-      method: 'POST',
-      body: JSON.stringify({ org_name: name }),
-    });
-    const body = await res.json();
-    if (!res.ok) throw new Error(body?.message ? `Could not create organization (${body.message})` : 'Could not create organization — try logging out and back in.');
-    const newOrg = Array.isArray(body) ? body[0] : body;
-    org = { id: newOrg.id, name: newOrg.name, logo: newOrg.logo_data_url, planStatus: newOrg.plan_status };
-    saveAuthToStorage();
-    return org;
-  },
-  async updateOrg(fields) {
-    if (!auth.accessToken) throw new Error('Not logged in — please log in again.');
-    const res = await authFetch(`${SUPABASE_URL}/rest/v1/k2l_organizations?id=eq.${org.id}`, {
-      method: 'PATCH',
-      headers: { 'Prefer': 'return=representation' },
-      body: JSON.stringify(fields),
-    });
-    const rows = await res.json();
-    if (!res.ok) throw new Error('Could not update organization');
-    org = { id: rows[0].id, name: rows[0].name, logo: rows[0].logo_data_url, planStatus: rows[0].plan_status };
-    saveAuthToStorage();
-    return org;
-  },
-  async refreshOrgStatus() {
-    if (!auth.accessToken) return null;
-    const res = await authFetch(`${SUPABASE_URL}/rest/v1/k2l_organizations?id=eq.${org.id}&select=id,name,logo_data_url,plan_status`);
-    if (!res.ok) return null;
-    const rows = await res.json();
-    if (!rows.length) return null;
-    const o = rows[0];
-    org = { id: o.id, name: o.name, logo: o.logo_data_url, planStatus: o.plan_status };
-    saveAuthToStorage();
-    return org;
-  },
-};
+async function sbInsert(table, row) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: sbHeaders({ 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }),
+    body: JSON.stringify(row),
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
 
-
-const RemoteStore = {
-  available: true,
-  async listSessions() {
-    try {
-      const res = await authFetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=session_id,delegate_name,course_name,updated_at&org_id=eq.${org.id}&order=updated_at.desc`);
-      if (!res.ok) throw new Error('list failed: ' + res.status);
-      const rows = await res.json();
-      RemoteStore.available = true;
-      return rows.map(r => ({ id: r.session_id, delegateName: r.delegate_name || 'Unnamed delegate', courseName: r.course_name || '', updatedAt: new Date(r.updated_at).getTime() }));
-    } catch (e) { console.error(e); RemoteStore.available = false; return null; }
-  },
-  async getSession(sessionId) {
-    try {
-      const res = await authFetch(`${SUPABASE_URL}/rest/v1/${TABLE}?session_id=eq.${encodeURIComponent(sessionId)}&select=data`);
-      if (!res.ok) throw new Error('get failed: ' + res.status);
-      const rows = await res.json();
-      RemoteStore.available = true;
-      return rows.length ? rows[0].data : null;
-    } catch (e) { console.error(e); RemoteStore.available = false; return null; }
-  },
-  async saveSession(sessionId, delegateName, courseName, dataObj) {
-    try {
-      const res = await authFetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
-        method: 'POST',
-        headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-        body: JSON.stringify([{ session_id: sessionId, org_id: org.id, delegate_name: delegateName || 'Unnamed delegate', course_name: courseName || '', data: dataObj, updated_at: new Date().toISOString() }]),
-      });
-      if (!res.ok) throw new Error('save failed: ' + res.status);
-      RemoteStore.available = true;
-      return true;
-    } catch (e) { console.error(e); RemoteStore.available = false; return false; }
-  },
-  async deleteSession(sessionId) {
-    try {
-      const res = await authFetch(`${SUPABASE_URL}/rest/v1/${TABLE}?session_id=eq.${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
-      return res.ok;
-    } catch (e) { console.error(e); return false; }
-  },
-};
-
-let sessionId = null;
-let data = {};
-let step = 0;
-let hubOpen = false;
-let authMode = 'login'; // 'login' | 'signup'
-let authError = null;
-let authBusy = false;
-let signupJustSent = false;
-let onboardingBusy = false;
-let onboardingError = null;
-let subscribeBusy = false;
-let subscribeError = null;
-
-const EDGE_FUNCTIONS_URL = `${SUPABASE_URL}/functions/v1`;
-
-async function startCheckout() {
-  subscribeBusy = true; subscribeError = null; render();
+async function loadAll() {
+  const configured = SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length > 20;
+  if (!configured) { loaded = 'unconfigured'; render(); return; }
   try {
-    const res = await authFetch(`${EDGE_FUNCTIONS_URL}/create-checkout-session`, {
-      method: 'POST',
-      body: JSON.stringify({ org_id: org.id, email: auth.email }),
-    });
-    const body = await res.json();
-    if (!res.ok || !body.url) throw new Error(body.error || 'Could not start checkout');
-    window.location.href = body.url;
+    const [c, p, r] = await Promise.all([
+      sbGet('test_centres?select=id,name,town,county,region,postcode&order=name.asc'),
+      sbGet('pass_rate_stats?select=centre_id,period_label,tests_conducted,tests_passed&order=period_label.desc'),
+      sbGet('reviews?select=centre_id,rating,outcome,reviewer_role,comment,created_at&is_approved=eq.true&order=created_at.desc'),
+    ]);
+    centres = c;
+    passRates = {}; p.forEach(row => (passRates[row.centre_id] = passRates[row.centre_id] || []).push(row));
+    reviews = {}; r.forEach(row => (reviews[row.centre_id] = reviews[row.centre_id] || []).push(row));
+    loaded = true;
   } catch (e) {
-    subscribeError = e.message || 'Something went wrong starting checkout.';
-    subscribeBusy = false;
-    render();
+    console.error(e);
+    loaded = 'error';
   }
-}
-let hubForm = null;
-let saveTimer = null;
-let saveFlashTimer = null;
-let cachedSessions = null;
-let sessionsLoading = false;
-
-function freshData() {
-  return {
-    trainerName: '', date: window.K2L.todayStr(),
-    scores: {}, feedbackRatings: {}, vocationalCats: [],
-  };
-}
-
-async function persistNow() {
-  if (!sessionId) return;
-  const ok = await RemoteStore.saveSession(sessionId, data.delegateName, data.courseName, data);
-  flashSaved(ok);
-  cachedSessions = null;
-}
-
-function scheduleSave() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => { persistNow(); }, 500);
-}
-
-function flashSaved(ok) {
-  const el = document.getElementById('saveIndicator');
-  if (!el) return;
-  el.textContent = ok === false ? 'Save failed — check connection' : 'Saved';
-  el.classList.toggle('save-error', ok === false);
-  el.classList.add('save-flash');
-  clearTimeout(saveFlashTimer);
-  saveFlashTimer = setTimeout(() => el.classList.remove('save-flash'), 1200);
-}
-
-function startNewSession() {
-  sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-  data = freshData();
-  step = 1;
-  hubOpen = false; hubForm = null;
-  persistNow();
   render();
-  window.scrollTo(0, 0);
-}
-
-async function resumeSession(id) {
-  const saved = await RemoteStore.getSession(id);
-  if (!saved) { alert('Could not load that session — check your connection and try again.'); render(); return; }
-  sessionId = id;
-  data = saved;
-  step = 1;
-  hubOpen = false; hubForm = null;
-  render();
-  window.scrollTo(0, 0);
-}
-
-async function deleteSession(id) {
-  if (!confirm('Delete this saved session? This cannot be undone.')) return;
-  await RemoteStore.deleteSession(id);
-  cachedSessions = null;
-  render();
-}
-
-function goHome() {
-  if (sessionId) persistNow();
-  step = 0; hubOpen = false; hubForm = null; cachedSessions = null;
-  render();
-  window.scrollTo(0, 0);
-}
-
-function openHub() { hubOpen = true; hubForm = null; render(); window.scrollTo(0, 0); }
-function closeHub() { hubOpen = false; render(); }
-function goToStep(name) {
-  const idx = STEPS.indexOf(name);
-  if (idx === -1) return;
-  step = idx; hubOpen = false; hubForm = null;
-  persistNow();
-  render();
-  window.scrollTo(0, 0);
 }
 
 /* ------------------------------------------------------------
-   Field helpers
+   Derived data
    ------------------------------------------------------------ */
-
-function escapeHtml(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function latestPassRate(centreId) {
+  const rows = passRates[centreId];
+  if (!rows || !rows.length) return null;
+  const r = rows[0];
+  if (!r.tests_conducted) return null;
+  return { pct: Math.round((r.tests_passed / r.tests_conducted) * 1000) / 10, period: r.period_label, conducted: r.tests_conducted, passed: r.tests_passed };
 }
 
-function fieldRow(label, key, opts) {
-  opts = opts || {};
-  const val = data[key] || '';
-  const type = opts.type || 'text';
-  if (type === 'textarea') {
-    return `<label class="f-label">${label}</label>
-      <textarea class="f-input f-textarea" data-key="${key}" rows="${opts.rows||3}">${escapeHtml(val)}</textarea>`;
-  }
-  return `<label class="f-label">${label}</label>
-    <input class="f-input" type="${type}" data-key="${key}" value="${escapeHtml(val)}" placeholder="${opts.placeholder||''}" />`;
+function rateClass(pct) {
+  if (pct == null) return 'none';
+  if (pct >= 50) return 'rate-good';
+  if (pct >= 38) return 'rate-mid';
+  return 'rate-bad';
 }
 
-function yesNoToggle(label, key) {
-  const val = data[key];
-  return `<div class="yn-row">
-    <span class="f-label" style="margin:0">${label}</span>
-    <div class="yn-buttons">
-      <button class="btn-chip ${val==='yes'?'chip-active':''}" data-yn="${key}:yes">Yes</button>
-      <button class="btn-chip ${val==='no'?'chip-active':''}" data-yn="${key}:no">No</button>
-    </div>
-  </div>`;
-}
+const KEYWORD_TAGS = [
+  ['Friendly examiner', /friendly|kind|patient|put me at ease|nice examiner/i],
+  ['Strict / formal', /strict|formal|no chat|serious/i],
+  ['Chatty examiner', /chatty|talkative|small talk/i],
+  ['Quiet test routes', /quiet road|calm route|not busy/i],
+  ['Busy roads', /busy road|heavy traffic|congest/i],
+  ['Lots of roundabouts', /roundabout/i],
+  ['Dual carriageway / motorway', /dual carriageway|motorway/i],
+  ['Tricky parking manoeuvre', /parking (was )?(hard|tricky|difficult)|bay park|parallel park/i],
+  ['Limited parking at centre', /nowhere to park|hard(?:ly)? (?:any )?parking|parking (?:was )?(?:limited|full)/i],
+  ['Long wait on the day', /long wait|waited ages|running late|delay/i],
+  ['Independent driving / sat nav', /independent driving|sat ?nav/i],
+];
 
-function scoreItem(itemKey, label) {
-  const entry = data.scores[itemKey] || {};
-  const grade = entry.grade || null;
-  let buttons = '';
-  for (let g = 1; g <= 4; g++) {
-    buttons += `<button class="grade-btn grade-${g} ${grade===g?'grade-active':''}" data-grade="${itemKey}:${g}">${g}</button>`;
-  }
-  return `<div class="score-item">
-    <div class="score-label">${label}</div>
-    <textarea class="f-input f-textarea" rows="2" placeholder="Trainer notes..." data-score-comment="${itemKey}">${escapeHtml(entry.comment||'')}</textarea>
-    <div class="grade-row">${buttons}</div>
-  </div>`;
-}
-
-function ratingItem(key, label) {
-  const val = data.feedbackRatings[key] || null;
-  let buttons = '';
-  for (let r = 1; r <= 5; r++) {
-    buttons += `<button class="rate-btn ${val===r?'rate-active':''}" data-rate="${key}:${r}">${r}</button>`;
-  }
-  return `<div class="score-item">
-    <div class="score-label">${label}</div>
-    <div class="grade-row">${buttons}</div>
-  </div>`;
-}
-
-function computeTotals() {
-  let total = 0, hasLow = false, filled = 0;
-  for (const key of window.K2L.SCORED_ONLY_KEYS) {
-    const e = data.scores[key];
-    if (e && e.grade) {
-      total += Number(e.grade);
-      filled++;
-      if (Number(e.grade) === 1) hasLow = true;
-    }
-  }
-  const n = window.K2L.SCORED_ONLY_KEYS.length;
-  let band = 'Needs Development';
-  if (total >= n*3+1) band = 'Advanced';
-  else if (total >= Math.ceil(n*2.5)) band = 'Competent';
-  else if (total >= n*2) band = 'Developing';
-  return { total, band, filled, max: n * 4, count: n };
-}
-
-function progressBar() {
-  if (step === 0) return '';
-  const pct = Math.round((step / (STEPS.length - 1)) * 100);
-  return `<div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>`;
-}
-
-function topBar() {
-  if (step === 0) return '';
-  return `<div class="top-bar">
-    <button class="topbar-btn" id="btnHome">← Sessions</button>
-    <button class="topbar-btn" id="btnOpenHub">☰ Forms</button>
-    <span class="save-indicator" id="saveIndicator">Saved</span>
-  </div>`;
-}
-
-function sharedSummaryBar() {
-  if (step <= 1) return '';
-  const parts = [];
-  if (data.delegateName) parts.push(escapeHtml(data.delegateName));
-  if (data.date) parts.push(escapeHtml(data.date));
-  if (data.trainerName) parts.push('Trainer: ' + escapeHtml(data.trainerName));
-  if (!parts.length) return '';
-  return `<div class="summary-bar">${parts.join(' &nbsp;·&nbsp; ')}</div>`;
-}
-
-function navButtons(opts) {
-  opts = opts || {};
-  return `<div class="nav-row">
-    ${step > 1 ? `<button class="btn-secondary" id="btnBack">Back</button>` : `<div></div>`}
-    ${opts.hideNext ? '' : `<button class="btn-primary" id="btnNext">${opts.nextLabel || 'Continue'}</button>`}
-  </div>`;
-}
-
-function renderAuthScreen() {
-  return `
-    <div class="card">
-      <div class="hero-wordmark">KEANE2LEARN</div>
-      <div class="hero-tagline">DRIVING ASSESSMENT</div>
-      <h1>${authMode === 'login' ? 'Log in' : 'Create your account'}</h1>
-      <p class="subtitle">${authMode === 'login' ? 'Log in to access your saved sessions.' : 'Set up an account for your company to start using Keane2Learn Driving Assessment.'}</p>
-      ${signupJustSent ? `
-        <p class="note" style="color:var(--green);font-weight:600;">Check your email for a confirmation link, then log in below.</p>
-      ` : ''}
-      ${authError ? `<p class="note warn">${escapeHtml(authError)}</p>` : ''}
-      <label class="f-label">Email</label>
-      <input class="f-input" type="email" id="authEmail" placeholder="you@company.com" />
-      <label class="f-label">Password</label>
-      <input class="f-input" type="password" id="authPassword" placeholder="At least 6 characters" />
-      <button class="btn-primary btn-full" id="btnAuthSubmit" style="margin-top:14px;" ${authBusy ? 'disabled' : ''}>
-        ${authBusy ? 'Please wait…' : (authMode === 'login' ? 'Log in' : 'Sign up')}
-      </button>
-      <button class="btn-secondary btn-full" id="btnAuthSwitch">
-        ${authMode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Log in'}
-      </button>
-    </div>
-  `;
-}
-
-function renderOnboardingScreen() {
-  return `
-    <div class="card">
-      <div class="hero-wordmark">KEANE2LEARN</div>
-      <div class="hero-tagline">DRIVING ASSESSMENT</div>
-      <h1>Set up your company</h1>
-      <p class="subtitle">One last step — name your organization. You can add a logo later from Account & Branding.</p>
-      ${onboardingError ? `<p class="note warn">${escapeHtml(onboardingError)}</p>` : ''}
-      <label class="f-label">Company / trading name</label>
-      <input class="f-input" type="text" id="onboardingOrgName" placeholder="e.g. Smith Driver Training" />
-      <button class="btn-primary btn-full" id="btnCreateOrg" style="margin-top:14px;" ${onboardingBusy ? 'disabled' : ''}>
-        ${onboardingBusy ? 'Setting up…' : 'Continue'}
-      </button>
-    </div>
-  `;
-}
-
-function renderSubscribeScreen() {
-  return `
-    <div class="card">
-      <div class="hero-wordmark">KEANE2LEARN</div>
-      <div class="hero-tagline">DRIVING ASSESSMENT</div>
-      <h1>Activate ${escapeHtml(org.name || 'your account')}</h1>
-      <p class="subtitle">One more step — activate your subscription to start creating sessions.</p>
-      ${subscribeError ? `<p class="note warn">${escapeHtml(subscribeError)}</p>` : ''}
-      <div class="score-summary" style="margin:10px 0 4px;">
-        <span class="score-big" style="font-size:26px;">£9.99</span>
-        <span class="score-of">/month</span>
-      </div>
-      <p class="note">Cancel any time from your Stripe receipt email.</p>
-      <button class="btn-primary btn-full" id="btnSubscribe" style="margin-top:14px;" ${subscribeBusy ? 'disabled' : ''}>
-        ${subscribeBusy ? 'Redirecting to checkout…' : 'Subscribe now'}
-      </button>
-      <button class="btn-secondary btn-full" id="btnRefreshStatus">I've already paid — refresh status</button>
-      <p class="note" style="margin-top:10px;">Signed in as ${escapeHtml(auth.email)} · <button class="link-btn" id="btnLogoutSub" style="padding:0;font-size:12.5px;">Log out</button></p>
-    </div>
-  `;
-}
-
-function timeAgo(ts) {
-  const mins = Math.round((Date.now() - ts) / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return mins + ' min ago';
-  const hrs = Math.round(mins / 60);
-  if (hrs < 24) return hrs + ' hr ago';
-  return Math.round(hrs / 24) + ' day(s) ago';
+function reviewSummary(centreId) {
+  const rows = reviews[centreId] || [];
+  if (!rows.length) return null;
+  const ratings = rows.filter(r => r.rating).map(r => r.rating);
+  const avg = ratings.length ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10 : null;
+  const passes = rows.filter(r => r.outcome === 'pass').length;
+  const fails = rows.filter(r => r.outcome === 'fail').length;
+  const text = rows.map(r => r.comment || '').join(' \n ');
+  const tags = KEYWORD_TAGS
+    .map(([label, re]) => [label, (text.match(new RegExp(re, 'gi')) || []).length])
+    .filter(([, n]) => n >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([label]) => label);
+  return { count: rows.length, avg, passes, fails, tags };
 }
 
 /* ------------------------------------------------------------
-   Signature pad
+   Rendering
    ------------------------------------------------------------ */
-
-function sigPadBlock(title, key) {
-  return `
-    <div class="sig-block">
-      <div class="sig-header">
-        <span class="f-label" style="margin:0">${title}</span>
-        <button class="link-btn" data-sig-clear="${key}">Clear</button>
-      </div>
-      <canvas class="sig-canvas" id="canvas_${key}" data-sig-canvas="${key}"></canvas>
-    </div>`;
+function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function timeAgo(iso) {
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (d <= 0) return 'today'; if (d === 1) return '1 day ago'; if (d < 30) return d + ' days ago';
+  const m = Math.floor(d / 30); return m === 1 ? '1 month ago' : m + ' months ago';
 }
-
-function setupSignaturePad(key) {
-  const canvas = document.getElementById('canvas_' + key);
-  if (!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  ctx.lineWidth = 2.2;
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = '#1a1d29';
-
-  const existing = data[key + 'SignatureDataUrl'];
-  if (existing) {
-    const img = new Image();
-    img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
-    img.src = existing;
-  }
-
-  let drawing = false;
-  let last = null;
-  function pos(e) {
-    const r = canvas.getBoundingClientRect();
-    const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
-    const cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
-    return { x: cx, y: cy };
-  }
-  function start(e) { e.preventDefault(); drawing = true; last = pos(e); }
-  function move(e) {
-    if (!drawing) return;
-    e.preventDefault();
-    const p = pos(e);
-    ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
-    last = p;
-  }
-  function end() {
-    if (!drawing) return;
-    drawing = false;
-    data[key + 'SignatureDataUrl'] = canvas.toDataURL('image/png');
-    scheduleSave();
-  }
-  canvas.addEventListener('pointerdown', start);
-  canvas.addEventListener('pointermove', move);
-  window.addEventListener('pointerup', end);
-  canvas.addEventListener('touchstart', start, { passive: false });
-  canvas.addEventListener('touchmove', move, { passive: false });
-  canvas.addEventListener('touchend', end);
-}
-
-function clearSignature(key) {
-  const canvas = document.getElementById('canvas_' + key);
-  if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); }
-  data[key + 'SignatureDataUrl'] = null;
-  scheduleSave();
-}
-
-/* ------------------------------------------------------------
-   Hub
-   ------------------------------------------------------------ */
-
-function sectionProgress(secKey) {
-  const items = Object.keys(SEC_LABELS[secKey].items);
-  const done = items.filter(k => data.scores[k] && data.scores[k].grade).length;
-  return `${done}/${items.length} graded`;
-}
-
-function feedbackProgressLabel() {
-  const done = Object.keys(RATING_LABELS).filter(k => data.feedbackRatings[k]).length;
-  return `${done}/${Object.keys(RATING_LABELS).length} ratings given`;
-}
-
-function signatureStatusLabel() {
-  const d = !!data.delegateSignatureDataUrl, t = !!data.trainerSignatureDataUrl;
-  if (d && t) return 'Both signed';
-  if (d) return 'Delegate signed only';
-  if (t) return 'Trainer signed only';
-  return 'Not signed yet';
-}
-
-function renderHub() {
-  const stripEl = document.getElementById('brandStrip');
-  if (stripEl) stripEl.style.display = 'flex';
-  const app = document.getElementById('app');
-  let inner;
-
-  if (!hubForm) {
-    const t = computeTotals();
-    inner = `
-      <div class="top-bar">
-        <button class="topbar-btn" id="btnCloseHub">✕ Close</button>
-        <span class="save-indicator" id="saveIndicator">Saved</span>
-      </div>
-      <div class="card">
-        <h2>Forms</h2>
-        <p class="note">Jump straight to any section.</p>
-        <div class="hub-tile" data-hub-go="session"><div><div class="hub-tile-title">Session Details</div><div class="hub-tile-sub">${escapeHtml(data.delegateName || 'Not entered yet')}</div></div><div class="hub-arrow">›</div></div>
-        <div class="hub-tile" data-hub-go="vehicle"><div><div class="hub-tile-title">Vehicle & Pre-Drive Checks</div></div><div class="hub-arrow">›</div></div>
-        <div class="hub-tile" data-hub-open="assessment"><div><div class="hub-tile-title">Driving Assessment</div><div class="hub-tile-sub">${t.filled}/${t.count} areas graded</div></div><div class="hub-arrow">›</div></div>
-        <div class="hub-tile" data-hub-go="licence"><div><div class="hub-tile-title">Licence & Compliance Record</div><div class="hub-tile-sub">${data.licenceNumber ? 'In progress' : 'Not started'}</div></div><div class="hub-arrow">›</div></div>
-        <div class="hub-tile" data-hub-go="feedback"><div><div class="hub-tile-title">Delegate Feedback</div><div class="hub-tile-sub">${feedbackProgressLabel()}</div></div><div class="hub-arrow">›</div></div>
-        <div class="hub-tile" data-hub-go="signatures"><div><div class="hub-tile-title">Signatures</div><div class="hub-tile-sub">${signatureStatusLabel()}</div></div><div class="hub-arrow">›</div></div>
-        <div class="hub-tile" data-hub-go="review"><div><div class="hub-tile-title">Review & Export</div><div class="hub-tile-sub">Download completed PDFs</div></div><div class="hub-arrow">›</div></div>
-      </div>
-    `;
-  } else if (hubForm === 'assessment') {
-    inner = `
-      <div class="top-bar">
-        <button class="topbar-btn" id="btnHubBack">← Forms</button>
-        <span class="save-indicator" id="saveIndicator">Saved</span>
-      </div>
-      <div class="card">
-        <h2>Driving Assessment</h2>
-        ${Object.entries(SEC_LABELS).map(([k, sec]) => `
-          <div class="hub-tile" data-hub-go="${k}"><div><div class="hub-tile-title">${sec.title}</div><div class="hub-tile-sub">${sectionProgress(k)}</div></div><div class="hub-arrow">›</div></div>
-        `).join('')}
-        <div class="hub-tile" data-hub-go="trainerComments"><div><div class="hub-tile-title">Total Score & Comments</div></div><div class="hub-arrow">›</div></div>
-      </div>
-    `;
-  }
-  app.innerHTML = inner;
-  document.querySelectorAll('[data-hub-go]').forEach(el => el.addEventListener('click', e => goToStep(e.currentTarget.dataset.hubGo)));
-  document.querySelectorAll('[data-hub-open]').forEach(el => el.addEventListener('click', e => { hubForm = e.currentTarget.dataset.hubOpen; renderHub(); }));
-  const closeBtn = document.getElementById('btnCloseHub'); if (closeBtn) closeBtn.addEventListener('click', closeHub);
-  const backBtn = document.getElementById('btnHubBack'); if (backBtn) backBtn.addEventListener('click', () => { hubForm = null; renderHub(); });
-}
-
-/* ------------------------------------------------------------
-   Render
-   ------------------------------------------------------------ */
 
 function render() {
-  if (hubOpen) { renderHub(); return; }
-  const stripEl = document.getElementById('brandStrip');
-  if (stripEl) stripEl.style.display = (step === 0) ? 'none' : 'flex';
   const app = document.getElementById('app');
-  const s = STEPS[step];
-  let html = '';
-
-  if (s === 'home') {
-    if (!auth.accessToken) {
-      html = renderAuthScreen();
-    } else if (!org.id) {
-      html = renderOnboardingScreen();
-    } else if (org.planStatus !== 'active') {
-      html = renderSubscribeScreen();
-    } else {
-    if (cachedSessions === null && !sessionsLoading) {
-      sessionsLoading = true;
-      RemoteStore.listSessions().then(rows => {
-        cachedSessions = rows || [];
-        sessionsLoading = false;
-        if (step === 0) render();
-      });
-    }
-    const sessions = (cachedSessions || []).slice().sort((a, b) => b.updatedAt - a.updatedAt);
-    html = `
-      <div class="card">
-        <div class="hero-wordmark">KEANE2LEARN</div>
-        <div class="hero-tagline">DRIVING ASSESSMENT</div>
-        <h1>${escapeHtml(org.name || 'Session Forms')}</h1>
-        <p class="subtitle">Complete the Driving Assessment Report, Licence & Compliance Record, and Delegate Feedback Form on your phone, then export completed PDFs.</p>
-        <p class="note">Signed in as ${escapeHtml(auth.email)} · <button class="link-btn" id="btnLogout" style="padding:0;font-size:12.5px;">Log out</button></p>
-        <button class="btn-primary btn-full" id="btnNewSession">+ Start new session</button>
-        <button class="btn-secondary btn-full" id="btnAccountSettings">Account & branding</button>
-      </div>
-      <div class="card">
-        <h2>Saved sessions</h2>
-        <p class="note" id="homeLoading">${sessionsLoading ? 'Loading…' : (cachedSessions === null ? '' : (RemoteStore.available ? '' : 'Could not connect — check your internet connection and reopen.'))}</p>
-        ${sessions.length ? sessions.map(sess => `
-          <div class="session-row">
-            <div class="session-info">
-              <div class="session-name">${escapeHtml(sess.delegateName)}</div>
-              <div class="session-meta">${escapeHtml(sess.courseName||'')} · updated ${timeAgo(sess.updatedAt)}</div>
-            </div>
-            <div class="session-actions">
-              <button class="btn-chip" data-resume="${sess.id}">Resume</button>
-              <button class="link-btn danger" data-delete="${sess.id}">Delete</button>
-            </div>
-          </div>
-        `).join('') : (sessionsLoading ? '' : '<p class="note">No saved sessions yet.</p>')}
-      </div>
-    `;
-    }
-  } else if (s === 'session') {
-    html = `
-      <div class="card">
-        <h2>Session Details</h2>
-        <p class="note">Fill these in once — used automatically across all 3 forms.</p>
-        ${fieldRow('Delegate Name', 'delegateName')}
-        ${fieldRow('Date', 'date')}
-        ${fieldRow('Location', 'location')}
-        ${fieldRow('Trainer Name', 'trainerName')}
-        ${fieldRow('Course / Session Type', 'courseName')}
-        ${fieldRow('Employer / Company', 'employer')}
-      </div>
-      ${navButtons()}
-    `;
-  } else if (s === 'vehicle') {
-    html = `
-      <div class="card">
-        <h2>Vehicle Information</h2>
-        ${fieldRow('Registration', 'vehicleReg')}
-        ${fieldRow('Make & Model', 'vehicleMakeModel')}
-        <div class="two-col">
-          ${fieldRow('Odometer (Start)', 'odoOpening')}
-          ${fieldRow('Odometer (End)', 'odoClosing')}
-        </div>
-      </div>
-      <div class="card">
-        <h2>Pre-Drive Checks <span class="tag">not scored</span></h2>
-        ${Object.entries(PREDRIVE_LABELS).map(([k,label]) => `
-          <label class="f-label">${label}</label>
-          <textarea class="f-input f-textarea" rows="2" data-score-comment="${k}">${escapeHtml((data.scores[k]&&data.scores[k].comment)||'')}</textarea>
-        `).join('')}
-      </div>
-      ${navButtons()}
-    `;
-  } else if (s.startsWith('sec_')) {
-    const sec = SEC_LABELS[s];
-    html = `
-      <div class="card">
-        <h2>${sec.title}</h2>
-        <p class="note">Grade 1 (needs development) – 4 (advanced) for each area. See the Scoring Guide for definitions.</p>
-        ${Object.entries(sec.items).map(([k,label]) => scoreItem(k, label)).join('')}
-      </div>
-      ${navButtons()}
-    `;
-  } else if (s === 'licence') {
-    html = `
-      <div class="card">
-        <h2>Licence & Compliance Record</h2>
-        ${yesNoToggle('Original licence presented?', 'originalLicencePresented')}
-        ${yesNoToggle('Full valid licence for category used?', 'fullValidLicence')}
-        ${fieldRow('Licence Number', 'licenceNumber')}
-        <div class="two-col">
-          ${fieldRow('Valid To', 'licenceValidTo', {placeholder:'DD/MM/YYYY'})}
-          ${fieldRow('Issue Number', 'issueNumber')}
-        </div>
-        ${fieldRow('Endorsements / codes relevant to this course', 'endorsements', {type:'textarea', rows:2})}
-        <label class="f-label">Vocational categories held</label>
-        <div class="chip-wrap">
-          ${VOCATIONAL_CATS.map(c => `<button class="btn-chip ${data.vocationalCats.includes(c)?'chip-active':''}" data-voc="${c}">${c}</button>`).join('')}
-        </div>
-        ${yesNoToggle('Holds valid CPC qualification card?', 'hasCpc')}
-        ${yesNoToggle('Holds valid digital tachograph card?', 'hasTacho')}
-        ${fieldRow('Driver Card Number', 'driverCardNumber')}
-        ${fieldRow('Comments', 'licenceComments', {type:'textarea', rows:2})}
-      </div>
-      ${navButtons()}
-    `;
-  } else if (s === 'trainerComments') {
-    const t = computeTotals();
-    html = `
-      <div class="card">
-        <h2>Total Score & Trainer Comments</h2>
-        <div class="score-summary">
-          <div><span class="score-big">${t.total}</span><span class="score-of">/${t.max}</span></div>
-          <div class="band-pill band-${t.band.replace(' ','')}">${t.band}</div>
-        </div>
-        <p class="note">${t.filled}/${t.count} areas graded so far.</p>
-        ${fieldRow('Trainer comments (overview of the session)', 'trainerComments', {type:'textarea', rows:6})}
-      </div>
-      ${navButtons()}
-    `;
-  } else if (s === 'feedback') {
-    html = `
-      <div class="card">
-        <h2>Delegate Feedback</h2>
-        <p class="note">Rate 1 (needs improvement) – 5 (excellent).</p>
-        ${Object.entries(RATING_LABELS).map(([k,label]) => ratingItem(k, label)).join('')}
-        ${fieldRow('Three things to keep working on', 'threePoints', {type:'textarea', rows:3})}
-        ${fieldRow('Additional comments', 'feedbackComments', {type:'textarea', rows:3})}
-        ${fieldRow('Session start / finish time', 'sessionTimes', {placeholder:'09:00 - 16:30'})}
-      </div>
-      ${navButtons()}
-    `;
-  } else if (s === 'signatures') {
-    html = `
-      <div class="card">
-        <h2>Signatures</h2>
-        <p class="note">Sign with your finger or a stylus.</p>
-        ${sigPadBlock('Delegate signature', 'delegate')}
-        ${sigPadBlock('Trainer signature', 'trainer')}
-      </div>
-      ${navButtons()}
-    `;
-  } else if (s === 'review') {
-    const t = computeTotals();
-    html = `
-      <div class="card">
-        <h2>Review & Export</h2>
-        <p><strong>${escapeHtml(data.delegateName||'Delegate')}</strong> — ${escapeHtml(data.courseName||'')}<br/>
-        ${escapeHtml(data.date||'')} · ${escapeHtml(data.location||'')} · Trainer: ${escapeHtml(data.trainerName||'')}</p>
-        <div class="score-summary">
-          <div><span class="score-big">${t.total}</span><span class="score-of">/${t.max}</span></div>
-          <div class="band-pill band-${t.band.replace(' ','')}">${t.band}</div>
-        </div>
-        <button class="btn-primary btn-full" id="dlAssess">Download Driving Assessment Report</button>
-        <button class="btn-primary btn-full" id="dlLicence">Download Licence & Compliance Record</button>
-        <button class="btn-primary btn-full" id="dlFeedback">Download Delegate Feedback Form</button>
-      </div>
-      <div class="card">
-        <button class="btn-secondary btn-full" id="btnRestart">Finish & return to sessions</button>
-      </div>
-      ${navButtons({ hideNext: true })}
-    `;
-  } else if (s === 'account') {
-    html = `
-      <div class="card">
-        <h2>Account & Branding</h2>
-        <p class="note">Signed in as ${escapeHtml(auth.email)}</p>
-        <label class="f-label">Company / trading name</label>
-        <input class="f-input" type="text" id="orgNameInput" value="${escapeHtml(org.name || '')}" />
-        <label class="f-label">Logo</label>
-        <input type="file" accept="image/*" id="orgLogoInput" />
-        ${org.logo ? `<img src="${org.logo}" style="max-height:48px;margin-top:10px;display:block;" />` : '<p class="note">No logo uploaded yet.</p>'}
-        <button class="btn-primary btn-full" id="btnSaveOrg" style="margin-top:16px;">Save changes</button>
-      </div>
-      <div class="card">
-        <button class="btn-secondary btn-full" id="btnBackToHome">← Back to sessions</button>
-      </div>
-    `;
+  if (loaded === 'unconfigured') {
+    app.innerHTML = `<div class="empty"><p><strong>Not connected yet.</strong></p>
+      <p>Open <code>index.html</code> and set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code>
+      at the top of the script (from your Supabase project's API settings), then run <code>schema.sql</code>
+      in the Supabase SQL editor.</p></div>`;
+    return;
   }
+  if (loaded === 'error') {
+    app.innerHTML = `<div class="empty">Couldn't load data. Check the Supabase URL/key and that <code>schema.sql</code> has been run.</div>`;
+    return;
+  }
+  if (!loaded) { app.innerHTML = `<div class="empty">Loading…</div>`; return; }
 
-  app.innerHTML = `${topBar()}${sharedSummaryBar()}${progressBar()}${html}`;
+  app.innerHTML = view === 'detail' && selectedId ? renderDetail(selectedId) : renderList();
   attachHandlers();
-  if (s === 'signatures') { setupSignaturePad('delegate'); setupSignaturePad('trainer'); }
+}
+
+function renderList() {
+  const regions = Array.from(new Set(centres.map(c => c.region).filter(Boolean))).sort();
+  const q = search.trim().toLowerCase();
+  let list = centres.filter(c =>
+    (!q || c.name.toLowerCase().includes(q) || c.town.toLowerCase().includes(q)) &&
+    (!regionFilter || c.region === regionFilter)
+  );
+  list = list.slice().sort((a, b) => {
+    const ra = latestPassRate(a.id), rb = latestPassRate(b.id);
+    if (ra && rb) return rb.pct - ra.pct;
+    if (ra) return -1; if (rb) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const cards = list.map(c => {
+    const r = latestPassRate(c.id);
+    const sum = reviewSummary(c.id);
+    return `<div class="card" data-id="${c.id}">
+      <div class="card-row">
+        <div>
+          <div class="centre-name">${esc(c.name)}</div>
+          <div class="centre-sub">${esc(c.town)}${c.county ? ', ' + esc(c.county) : ''}${sum ? ' · ' + sum.count + ' review' + (sum.count === 1 ? '' : 's') : ''}</div>
+        </div>
+        <span class="pill ${rateClass(r ? r.pct : null)}">${r ? r.pct + '% pass' : 'No data yet'}</span>
+      </div>
+    </div>`;
+  }).join('') || `<div class="empty">No test centres match that search.</div>`;
+
+  return `
+    <div class="searchbar">
+      <input type="text" id="search" placeholder="Search by centre or town…" value="${esc(search)}">
+      <select id="region">
+        <option value="">All regions</option>
+        ${regions.map(r => `<option value="${esc(r)}" ${r === regionFilter ? 'selected' : ''}>${esc(r)}</option>`).join('')}
+      </select>
+    </div>
+    ${cards}
+    <p class="note">Pass rates: DVSA official statistics (DRT122A), Open Government Licence v3.0. Reviews are submitted anonymously by candidates and instructors, and are moderated before publishing.</p>
+  `;
+}
+
+function renderDetail(id) {
+  const c = centres.find(x => x.id === id);
+  if (!c) { view = 'list'; return renderList(); }
+  const rates = passRates[id] || [];
+  const sum = reviewSummary(id);
+  const list = (reviews[id] || []);
+
+  const statBoxes = rates.length
+    ? rates.map(r => {
+        const pct = Math.round((r.tests_passed / r.tests_conducted) * 1000) / 10;
+        return `<div class="stat-box"><div class="num">${pct}%</div><div class="lbl">${esc(r.period_label)} · ${r.tests_conducted.toLocaleString()} tests</div></div>`;
+      }).join('')
+    : `<div class="empty">No official pass-rate data imported for this centre yet.</div>`;
+
+  const summaryBlock = sum ? `
+    <div class="stat-grid" style="margin-bottom:12px">
+      <div class="stat-box"><div class="num">${sum.count}</div><div class="lbl">Reviews</div></div>
+      <div class="stat-box"><div class="num">${sum.avg != null ? sum.avg + '★' : '—'}</div><div class="lbl">Avg rating</div></div>
+      <div class="stat-box"><div class="num">${sum.passes}/${sum.passes + sum.fails || 1}</div><div class="lbl">Passed (of rated)</div></div>
+    </div>
+    ${sum.tags.length ? `<div class="tags">${sum.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : '<p class="muted">Not enough reviews yet to spot common themes.</p>'}
+  ` : `<p class="empty">No reviews yet — be the first to leave one below.</p>`;
+
+  const reviewList = list.length ? list.map(r => `
+    <div class="review">
+      <div class="review-head">
+        <span>${r.reviewer_role ? esc(r.reviewer_role) : 'Anonymous'}${r.outcome ? ' · ' + (r.outcome === 'pass' ? '✅ Passed' : '❌ Did not pass') : ''}</span>
+        <span>${timeAgo(r.created_at)}</span>
+      </div>
+      ${r.rating ? `<div class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>` : ''}
+      ${r.comment ? `<div>${esc(r.comment)}</div>` : ''}
+    </div>
+  `).join('') : '';
+
+  return `
+    <a class="backlink" id="back">← All test centres</a>
+    <h2>${esc(c.name)}</h2>
+    <p class="muted">${esc(c.town)}${c.county ? ', ' + esc(c.county) : ''}${c.postcode ? ' · ' + esc(c.postcode) : ''}</p>
+
+    <div class="section">
+      <h3>Pass rate</h3>
+      <div class="stat-grid">${statBoxes}</div>
+    </div>
+
+    <div class="section">
+      <h3>What candidates say</h3>
+      ${summaryBlock}
+      ${reviewList}
+    </div>
+
+    <div class="section">
+      <h3>Leave an anonymous review</h3>
+      <form id="reviewForm">
+        <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off">
+        <label>I am a...</label>
+        <select name="role">
+          <option value="pupil">Pupil / learner</option>
+          <option value="instructor">Driving instructor</option>
+        </select>
+        <div class="row2">
+          <div>
+            <label>Test outcome</label>
+            <select name="outcome">
+              <option value="">Prefer not to say</option>
+              <option value="pass">Passed</option>
+              <option value="fail">Did not pass</option>
+            </select>
+          </div>
+          <div>
+            <label>Rating</label>
+            <select name="rating">
+              <option value="">No rating</option>
+              <option value="5">★★★★★</option>
+              <option value="4">★★★★</option>
+              <option value="3">★★★</option>
+              <option value="2">★★</option>
+              <option value="1">★</option>
+            </select>
+          </div>
+        </div>
+        <label>Comments (no names, please — this is anonymous)</label>
+        <textarea name="comment" maxlength="1000" placeholder="e.g. Quiet test routes, plenty of roundabout practice, examiner was friendly and put me at ease."></textarea>
+        <button class="primary" type="submit">Submit review</button>
+        <p class="note">Reviews are checked before they appear publicly. Please don't include anyone's name — the point of this page is to describe the centre and the experience, not to identify an individual examiner.</p>
+      </form>
+    </div>
+  `;
+}
+
+/* ------------------------------------------------------------
+   Events
+   ------------------------------------------------------------ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
 }
 
 function attachHandlers() {
-  // Auth screen handlers
-  const btnAuthSubmit = document.getElementById('btnAuthSubmit');
-  if (btnAuthSubmit) btnAuthSubmit.addEventListener('click', async () => {
-    const email = document.getElementById('authEmail').value.trim();
-    const password = document.getElementById('authPassword').value;
-    if (!email || !password) { authError = 'Enter both email and password.'; render(); return; }
-    authBusy = true; authError = null; render();
+  document.querySelectorAll('.card').forEach(el => el.addEventListener('click', () => {
+    selectedId = el.dataset.id; view = 'detail'; render(); window.scrollTo(0, 0);
+  }));
+  const back = document.getElementById('back');
+  if (back) back.addEventListener('click', () => { view = 'list'; render(); window.scrollTo(0, 0); });
+
+  const s = document.getElementById('search');
+  if (s) s.addEventListener('input', e => { search = e.target.value; render(); document.getElementById('search').focus(); document.getElementById('search').setSelectionRange(search.length, search.length); });
+  const rg = document.getElementById('region');
+  if (rg) rg.addEventListener('change', e => { regionFilter = e.target.value; render(); });
+
+  const form = document.getElementById('reviewForm');
+  if (form) form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    if (fd.get('website')) return; // honeypot tripped — silently drop
+    const comment = (fd.get('comment') || '').trim();
+    const btn = form.querySelector('button');
+    btn.disabled = true; btn.textContent = 'Submitting…';
     try {
-      if (authMode === 'signup') {
-        await Auth.signup(email, password);
-        signupJustSent = true;
-        authMode = 'login';
-      } else {
-        await Auth.login(email, password);
-        const myOrg = await Auth.getMyOrg();
-        if (myOrg) { org = myOrg; saveAuthToStorage(); }
-        signupJustSent = false;
-      }
-    } catch (e) {
-      authError = e.message || 'Something went wrong.';
+      await sbInsert('reviews', {
+        centre_id: selectedId,
+        rating: fd.get('rating') ? Number(fd.get('rating')) : null,
+        outcome: fd.get('outcome') || null,
+        reviewer_role: fd.get('role') || null,
+        comment: comment || null,
+        is_approved: false,
+      });
+      form.reset();
+      showToast('Thanks — your review will appear once it’s checked.');
+    } catch (err) {
+      console.error(err);
+      showToast('Something went wrong — please try again.');
     }
-    authBusy = false;
-    render();
+    btn.disabled = false; btn.textContent = 'Submit review';
   });
-  const btnAuthSwitch = document.getElementById('btnAuthSwitch');
-  if (btnAuthSwitch) btnAuthSwitch.addEventListener('click', () => {
-    authMode = authMode === 'login' ? 'signup' : 'login';
-    authError = null; signupJustSent = false;
-    render();
-  });
-  const btnCreateOrg = document.getElementById('btnCreateOrg');
-  if (btnCreateOrg) btnCreateOrg.addEventListener('click', async () => {
-    const name = document.getElementById('onboardingOrgName').value.trim();
-    if (!name) { onboardingError = 'Enter a company name.'; render(); return; }
-    onboardingBusy = true; onboardingError = null; render();
-    try {
-      await Auth.createOrg(name);
-      cachedSessions = null;
-    } catch (e) {
-      onboardingError = e.message || 'Could not set up your organization.';
-    }
-    onboardingBusy = false;
-    render();
-  });
-  const btnLogout = document.getElementById('btnLogout');
-  if (btnLogout) btnLogout.addEventListener('click', () => {
-    Auth.logout();
-    cachedSessions = null; sessionId = null; data = {};
-    render();
-  });
-  const btnAccountSettings = document.getElementById('btnAccountSettings');
-  if (btnAccountSettings) btnAccountSettings.addEventListener('click', () => goToStep('account'));
-  const btnSubscribe = document.getElementById('btnSubscribe');
-  if (btnSubscribe) btnSubscribe.addEventListener('click', startCheckout);
-  const btnRefreshStatus = document.getElementById('btnRefreshStatus');
-  if (btnRefreshStatus) btnRefreshStatus.addEventListener('click', async () => {
-    btnRefreshStatus.disabled = true; btnRefreshStatus.textContent = 'Checking…';
-    await Auth.refreshOrgStatus();
-    render();
-  });
-  const btnLogoutSub = document.getElementById('btnLogoutSub');
-  if (btnLogoutSub) btnLogoutSub.addEventListener('click', () => { Auth.logout(); render(); });
-  const btnBackToHome = document.getElementById('btnBackToHome');
-  if (btnBackToHome) btnBackToHome.addEventListener('click', goHome);
-  const btnSaveOrg = document.getElementById('btnSaveOrg');
-  if (btnSaveOrg) btnSaveOrg.addEventListener('click', async () => {
-    const name = document.getElementById('orgNameInput').value.trim();
-    const fileInput = document.getElementById('orgLogoInput');
-    const fields = { name };
-    async function finishSave() {
-      btnSaveOrg.disabled = true; btnSaveOrg.textContent = 'Saving…';
-      try { await Auth.updateOrg(fields); render(); }
-      catch (e) { alert('Could not save changes.'); }
-    }
-    if (fileInput && fileInput.files && fileInput.files[0]) {
-      const reader = new FileReader();
-      reader.onload = () => { fields.logo_data_url = reader.result; finishSave(); };
-      reader.readAsDataURL(fileInput.files[0]);
-    } else {
-      finishSave();
-    }
-  });
-
-  document.querySelectorAll('[data-key]').forEach(el => el.addEventListener('input', e => { data[e.target.dataset.key] = e.target.value; scheduleSave(); }));
-  document.querySelectorAll('[data-score-comment]').forEach(el => el.addEventListener('input', e => {
-    const k = e.target.dataset.scoreComment;
-    data.scores[k] = data.scores[k] || {};
-    data.scores[k].comment = e.target.value;
-    scheduleSave();
-  }));
-  document.querySelectorAll('[data-grade]').forEach(el => el.addEventListener('click', e => {
-    const [k, g] = e.target.dataset.grade.split(':');
-    data.scores[k] = data.scores[k] || {};
-    data.scores[k].grade = data.scores[k].grade === Number(g) ? null : Number(g);
-    persistNow(); render();
-  }));
-  document.querySelectorAll('[data-rate]').forEach(el => el.addEventListener('click', e => {
-    const [k, r] = e.target.dataset.rate.split(':');
-    data.feedbackRatings[k] = data.feedbackRatings[k] === Number(r) ? null : Number(r);
-    persistNow(); render();
-  }));
-  document.querySelectorAll('[data-yn]').forEach(el => el.addEventListener('click', e => {
-    const [k, v] = e.target.dataset.yn.split(':');
-    data[k] = data[k] === v ? null : v;
-    persistNow(); render();
-  }));
-  document.querySelectorAll('[data-voc]').forEach(el => el.addEventListener('click', e => {
-    const c = e.target.dataset.voc;
-    const idx = data.vocationalCats.indexOf(c);
-    if (idx >= 0) data.vocationalCats.splice(idx, 1); else data.vocationalCats.push(c);
-    persistNow(); render();
-  }));
-  document.querySelectorAll('[data-sig-clear]').forEach(el => el.addEventListener('click', e => clearSignature(e.target.dataset.sigClear)));
-  document.querySelectorAll('[data-resume]').forEach(el => el.addEventListener('click', e => resumeSession(e.target.dataset.resume)));
-  document.querySelectorAll('[data-delete]').forEach(el => el.addEventListener('click', e => deleteSession(e.target.dataset.delete)));
-
-  const btnNewSession = document.getElementById('btnNewSession'); if (btnNewSession) btnNewSession.addEventListener('click', startNewSession);
-  const btnHome = document.getElementById('btnHome'); if (btnHome) btnHome.addEventListener('click', goHome);
-  const btnOpenHub = document.getElementById('btnOpenHub'); if (btnOpenHub) btnOpenHub.addEventListener('click', openHub);
-  const back = document.getElementById('btnBack'); if (back) back.addEventListener('click', () => { step = Math.max(1, step - 1); persistNow(); render(); window.scrollTo(0,0); });
-  const next = document.getElementById('btnNext'); if (next) next.addEventListener('click', () => { step = Math.min(STEPS.length - 1, step + 1); persistNow(); render(); window.scrollTo(0,0); });
-  const restart = document.getElementById('btnRestart'); if (restart) restart.addEventListener('click', () => { persistNow(); step = 0; render(); window.scrollTo(0,0); });
-
-  async function withBusy(btn, fn) {
-    const orig = btn.textContent;
-    btn.disabled = true; btn.textContent = 'Generating…';
-    try { await fn(); } catch (err) { console.error(err); alert('Something went wrong generating the PDF.'); }
-    finally { btn.disabled = false; btn.textContent = orig; }
-  }
-  const dlAssess = document.getElementById('dlAssess');
-  if (dlAssess) dlAssess.addEventListener('click', () => withBusy(dlAssess, async () => {
-    const bytes = await window.K2L.generateAssessmentPdf(data);
-    window.K2L.downloadBytes(bytes, `Driving_Assessment_${(data.delegateName||'delegate').replace(/\s+/g,'_')}.pdf`);
-  }));
-  const dlLicence = document.getElementById('dlLicence');
-  if (dlLicence) dlLicence.addEventListener('click', () => withBusy(dlLicence, async () => {
-    const bytes = await window.K2L.generateLicencePdf(data);
-    window.K2L.downloadBytes(bytes, `Licence_Record_${(data.delegateName||'delegate').replace(/\s+/g,'_')}.pdf`);
-  }));
-  const dlFeedback = document.getElementById('dlFeedback');
-  if (dlFeedback) dlFeedback.addEventListener('click', () => withBusy(dlFeedback, async () => {
-    const bytes = await window.K2L.generateFeedbackPdf(data);
-    window.K2L.downloadBytes(bytes, `Feedback_${(data.delegateName||'delegate').replace(/\s+/g,'_')}.pdf`);
-  }));
 }
 
-loadAuthFromStorage();
-render();
-
+loadAll();
 </script>
 </body>
 </html>
