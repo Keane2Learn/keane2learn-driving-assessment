@@ -536,6 +536,9 @@ function renderDetail(id) {
     </div>
   `).join('') : '';
 
+  const mapsQuery = encodeURIComponent(`${c.name} Driving Test Centre, ${c.town}, UK`);
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+
   return `
     <a class="backlink" id="back">← All test centres</a>
     <h2>${esc(c.name)}</h2>
@@ -550,9 +553,13 @@ function renderDetail(id) {
     ${ageBlock(id)}
 
     <div class="section">
-      <h3>What candidates say</h3>
+      <div class="card-row">
+        <h3 style="margin:0">What candidates say</h3>
+        <a class="src" href="${mapsUrl}" target="_blank" rel="noopener">Google reviews for this centre ↗</a>
+      </div>
       ${summaryBlock}
       ${reviewList}
+      <p class="note">The link above opens this centre's own Google Maps listing, with Google's reviews shown on Google's page — this site only stores the anonymous reviews people submit directly below.</p>
     </div>
 
     <div class="section">
