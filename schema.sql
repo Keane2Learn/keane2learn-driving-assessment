@@ -17,12 +17,18 @@ create table if not exists pass_rate_stats (
   id uuid primary key default gen_random_uuid(),
   centre_id uuid not null references test_centres(id) on delete cascade,
   period_label text not null,           -- e.g. '2024-25'
-  tests_conducted integer not null check (tests_conducted >= 0),
-  tests_passed integer not null check (tests_passed >= 0),
-  source text not null default 'DVSA DRT122A (Open Government Licence v3.0)',
+  tests_conducted integer check (tests_conducted >= 0),
+  tests_passed integer check (tests_passed >= 0),
+  first_attempt_tests integer check (first_attempt_tests >= 0),
+  first_attempt_passes integer check (first_attempt_passes >= 0),
+  first_attempt_zero_fault_passes integer check (first_attempt_zero_fault_passes >= 0),
+  source text not null default 'DVSA DRT122A/DRT122C (Open Government Licence v3.0)',
   imported_at timestamptz not null default now(),
   unique (centre_id, period_label)
 );
+-- tests_conducted/tests_passed and the first_attempt_* columns are all
+-- nullable: a handful of very-low-volume centres only appear in one of
+-- DVSA's two source files (DRT122A / DRT122C), not both.
 
 create table if not exists reviews (
   id uuid primary key default gen_random_uuid(),

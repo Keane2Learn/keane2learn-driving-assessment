@@ -128,7 +128,7 @@ async function loadAll() {
   try {
     const [c, p, r] = await Promise.all([
       sbGet('test_centres?select=id,name,town,county,region,postcode&order=name.asc'),
-      sbGet('pass_rate_stats?select=centre_id,period_label,tests_conducted,tests_passed&order=period_label.desc'),
+      sbGet('pass_rate_stats?select=centre_id,period_label,tests_conducted,tests_passed,first_attempt_tests,first_attempt_passes&order=period_label.desc'),
       sbGet('reviews?select=centre_id,rating,outcome,reviewer_role,comment,created_at&is_approved=eq.true&order=created_at.desc'),
     ]);
     centres = c;
@@ -270,8 +270,16 @@ function renderDetail(id) {
 
   const statBoxes = rates.length
     ? rates.map(r => {
-        const pct = Math.round((r.tests_passed / r.tests_conducted) * 1000) / 10;
-        return `<div class="stat-box"><div class="num">${pct}%</div><div class="lbl">${esc(r.period_label)} · ${r.tests_conducted.toLocaleString()} tests</div></div>`;
+        const boxes = [];
+        if (r.tests_conducted) {
+          const pct = Math.round((r.tests_passed / r.tests_conducted) * 1000) / 10;
+          boxes.push(`<div class="stat-box"><div class="num">${pct}%</div><div class="lbl">Overall pass rate<br>${esc(r.period_label)} · ${r.tests_conducted.toLocaleString()} tests</div></div>`);
+        }
+        if (r.first_attempt_tests) {
+          const fpct = Math.round((r.first_attempt_passes / r.first_attempt_tests) * 1000) / 10;
+          boxes.push(`<div class="stat-box"><div class="num">${fpct}%</div><div class="lbl">First-time pass rate<br>${esc(r.period_label)} · ${r.first_attempt_tests.toLocaleString()} first tests</div></div>`);
+        }
+        return boxes.join('');
       }).join('')
     : `<div class="empty">No official pass-rate data imported for this centre yet.</div>`;
 

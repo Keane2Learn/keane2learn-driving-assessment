@@ -27,27 +27,21 @@ tier. No server to run, no build step.
    The anon key is safe to ship in client-side code — it's designed to be
    public, and row-level security is what actually protects the data.
 
-## 2. Load test centres
+## 2. Load test centres and pass rates
 
-`seed_centres.csv` has ~45 well-known centres to get you started (no pass
-rates — see below). In Supabase: **Table Editor → test_centres → Insert →
-Import data from CSV** and upload it.
+`import_real_data.sql` has the real thing: 318 UK car test centres with
+official 2024–25 pass rates, built from DVSA's own published DRT122A
+(overall pass rate) and DRT122C (first-attempt pass rate) releases —
+[gov.uk/government/statistics/driving-test-statistics](https://www.gov.uk/government/statistics/driving-test-statistics),
+Open Government Licence v3.0. Paste its contents into the Supabase SQL
+Editor and run it — it migrates the schema (adds the first-attempt columns)
+and replaces whatever's in `test_centres`/`pass_rate_stats` with the real
+data in one go. `seed_centres.csv` (a placeholder ~45-centre starter list,
+no pass rates) is superseded by this and only useful if you want a smaller
+sample.
 
-To get the full list of ~380 centres with real pass rates:
-
-1. Download the latest year's data from
-   [gov.uk/government/statistics/driving-test-statistics](https://www.gov.uk/government/statistics/driving-test-statistics)
-   — the **DRT122A** table (car practical tests by test centre), published
-   annually, Open Government Licence v3.0.
-2. Add any centres from that file not already in `test_centres` (Table
-   Editor → Import CSV again, or ask Claude to generate the exact `INSERT`
-   statements from the file).
-3. Import the pass/fail counts into `pass_rate_stats` — one row per centre
-   per period, with `centre_id`, `period_label` (e.g. `2024-25`),
-   `tests_conducted`, `tests_passed`. The site computes the percentage itself.
-
-DVSA republishes this every autumn — repeat step 3 each year to keep pass
-rates current.
+DVSA republishes both files every autumn — download the new ones, send them
+to Claude, and it'll regenerate `import_real_data.sql` for the new year.
 
 ## 3. Moderate reviews
 
