@@ -131,7 +131,7 @@ async function loadAll() {
   try {
     const [c, p, r] = await Promise.all([
       sbGet('test_centres?select=id,name,town,county,region,postcode&order=name.asc'),
-      sbGet('pass_rate_stats?select=centre_id,period_label,tests_conducted,tests_passed,first_attempt_tests,first_attempt_passes&order=period_label.desc'),
+      sbGet('pass_rate_stats?select=centre_id,period_label,tests_conducted,tests_passed,first_attempt_tests,first_attempt_passes,automatic_tests,automatic_passes&order=period_label.desc'),
       sbGet('reviews?select=centre_id,rating,outcome,reviewer_role,comment,created_at&is_approved=eq.true&order=created_at.desc'),
     ]);
     centres = c;
@@ -312,7 +312,7 @@ function renderList() {
       </select>` : ''}
     </div>
     ${cards}
-    <p class="note">Pass rates: DVSA official statistics (DRT122A/C/D), Open Government Licence v3.0. Reviews are submitted anonymously by candidates and instructors, and are moderated before publishing.</p>
+    <p class="note">Pass rates: DVSA official statistics (DRT122A/C/D/E), Open Government Licence v3.0. Reviews are submitted anonymously by candidates and instructors, and are moderated before publishing.</p>
   `;
 }
 
@@ -351,6 +351,10 @@ function renderDetail(id) {
         if (r.first_attempt_tests) {
           const fpct = Math.round((r.first_attempt_passes / r.first_attempt_tests) * 1000) / 10;
           boxes.push(`<div class="stat-box"><div class="num">${fpct}%</div><div class="lbl">First-time pass rate<br>${esc(r.period_label)} · ${r.first_attempt_tests.toLocaleString()} first tests</div></div>`);
+        }
+        if (r.automatic_tests) {
+          const apct = Math.round((r.automatic_passes / r.automatic_tests) * 1000) / 10;
+          boxes.push(`<div class="stat-box"><div class="num">${apct}%</div><div class="lbl">Automatic pass rate<br>${esc(r.period_label)} · ${r.automatic_tests.toLocaleString()} tests</div></div>`);
         }
         return boxes.join('');
       }).join('')

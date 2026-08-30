@@ -22,7 +22,9 @@ create table if not exists pass_rate_stats (
   first_attempt_tests integer check (first_attempt_tests >= 0),
   first_attempt_passes integer check (first_attempt_passes >= 0),
   first_attempt_zero_fault_passes integer check (first_attempt_zero_fault_passes >= 0),
-  source text not null default 'DVSA DRT122A/DRT122C (Open Government Licence v3.0)',
+  automatic_tests integer check (automatic_tests >= 0),
+  automatic_passes integer check (automatic_passes >= 0),
+  source text not null default 'DVSA DRT122A/C/E (Open Government Licence v3.0)',
   imported_at timestamptz not null default now(),
   unique (centre_id, period_label)
 );

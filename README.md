@@ -37,6 +37,13 @@ Open Government Licence v3.0:
 - **DRT122A** — overall pass rate per centre
 - **DRT122C** — first-attempt pass rate + zero-fault passes per centre
 - **DRT122D** — pass rate by age (17–25) per centre
+- **DRT122E** — automatic-gearbox pass rate per centre
+
+Worth grabbing next if you want it: **DRT122F** ("Car driving test waiting
+times and availability by driving test centre") — DVSA publishes this
+monthly and it's arguably the single most-asked practical question
+("which centre near me has the shortest wait"). Not in the app yet since
+you haven't sent that file.
 
 Paste the file's contents into the Supabase SQL Editor and run it — it
 migrates the schema (adds the first-attempt and age-breakdown tables) and
