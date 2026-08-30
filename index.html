@@ -46,6 +46,10 @@
   .stat-box .num{font-size:1.4rem;font-weight:700}
   .stat-box .lbl{color:var(--ink-muted);font-size:.78rem;margin-top:2px}
   .tags{display:flex;flex-wrap:wrap;gap:6px}
+  table{border-collapse:collapse}
+  table td{padding:5px 8px 5px 0;border-bottom:1px solid var(--line)}
+  table td.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0}
+  table tr:last-child td{border-bottom:none}
   .tag{background:var(--surface-2);border-radius:100px;padding:5px 12px;font-size:.82rem}
   .review{border-bottom:1px solid var(--line);padding:12px 0}
   .review:last-child{border-bottom:none}
@@ -84,6 +88,32 @@
    ------------------------------------------------------------ */
 const SUPABASE_URL = 'https://wqolxmezdudtqwvqilbf.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_oyl-uBQ5cqAIyoLc0J1A5A_qovyRDCw';
+
+/* ------------------------------------------------------------
+   National context — GB-wide DVSA figures (not tied to any one
+   centre, so not worth a database table). Source: DRT121A, DRT121D,
+   DRT121E, DRT111C, DRT121G — gov.uk/government/statistics/driving-test-statistics,
+   Open Government Licence v3.0. Update by hand once a year when
+   DVSA republishes; ask Claude to regenerate these numbers from the
+   new files.
+   ------------------------------------------------------------ */
+const NATIONAL_STATS = {
+  period: '2024-25',
+  overallPassRate: 48.7,
+  firstAttemptPassRate: 48.9,
+  zeroFaultPassShare: 4.4, // % of passes that were fault-free
+  theoryPassRate: 44.9,
+  passByAttempt: [
+    ['1st', 48.9], ['2nd', 49.5], ['3rd', 49.1], ['4th', 48.0], ['5th', 46.8], ['6th+', 42.5],
+  ],
+  waitTimesAsOf: 'July 2026',
+  regionalWaitWeeks: [
+    ['South West', 17.3], ['Yorkshire and the Humber', 17.6], ['Wales', 12.4],
+    ['North East', 19.5], ['Scotland', 20.4], ['North West', 20.5],
+    ['South East', 21.2], ['East Midlands', 21.3], ['West Midlands', 22.8],
+    ['East of England', 23.2], ['London', 23.5],
+  ].sort((a, b) => a[1] - b[1]),
+};
 
 /* ------------------------------------------------------------
    State
@@ -255,6 +285,34 @@ function render() {
   attachHandlers();
 }
 
+let nationalOpen = false;
+function nationalPanel() {
+  const s = NATIONAL_STATS;
+  const attemptChips = s.passByAttempt.map(([label, pct]) => `<span class="tag">${label} attempt: ${pct}%</span>`).join('');
+  const waitRows = s.regionalWaitWeeks.map(([name, wk]) => `<tr><td>${esc(name)}</td><td class="num">${wk}w</td></tr>`).join('');
+  return `
+    <div class="card" id="nationalCard">
+      <div class="card-row" style="cursor:pointer" id="nationalToggle">
+        <div class="centre-name">🇬🇧 National picture (${esc(s.period)})</div>
+        <span class="muted">${nationalOpen ? 'Hide ▲' : 'Show ▼'}</span>
+      </div>
+      ${nationalOpen ? `
+        <div class="stat-grid" style="margin-top:12px">
+          <div class="stat-box"><div class="num">${s.overallPassRate}%</div><div class="lbl">Overall pass rate</div></div>
+          <div class="stat-box"><div class="num">${s.firstAttemptPassRate}%</div><div class="lbl">First-time pass rate</div></div>
+          <div class="stat-box"><div class="num">${s.zeroFaultPassShare}%</div><div class="lbl">Passes with zero faults</div></div>
+          <div class="stat-box"><div class="num">${s.theoryPassRate}%</div><div class="lbl">Theory test pass rate</div></div>
+        </div>
+        <p class="muted" style="margin:14px 0 6px">Pass rate by attempt number</p>
+        <div class="tags">${attemptChips}</div>
+        <p class="muted" style="margin:14px 0 6px">Median wait for a test, by region (${esc(s.waitTimesAsOf)})</p>
+        <table style="width:100%;font-size:.85rem"><tbody>${waitRows}</tbody></table>
+        <p class="note">These are national/regional DVSA figures, not specific to any one test centre — for a specific centre, use the list below.</p>
+      ` : ''}
+    </div>
+  `;
+}
+
 function renderList() {
   const regions = Array.from(new Set(centres.map(c => c.region).filter(Boolean))).sort();
   const q = search.trim().toLowerCase();
@@ -292,6 +350,7 @@ function renderList() {
   }).join('') || `<div class="empty">No test centres match that search.</div>`;
 
   return `
+    ${nationalPanel()}
     <div class="searchbar">
       <input type="text" id="search" placeholder="Search by centre or town…" value="${esc(search)}">
     </div>
@@ -447,9 +506,11 @@ function showToast(msg) {
 }
 
 function attachHandlers() {
-  document.querySelectorAll('.card').forEach(el => el.addEventListener('click', () => {
+  document.querySelectorAll('.card[data-id]').forEach(el => el.addEventListener('click', () => {
     selectedId = el.dataset.id; view = 'detail'; render(); window.scrollTo(0, 0);
   }));
+  const natToggle = document.getElementById('nationalToggle');
+  if (natToggle) natToggle.addEventListener('click', () => { nationalOpen = !nationalOpen; render(); });
   const back = document.getElementById('back');
   if (back) back.addEventListener('click', () => { view = 'list'; render(); window.scrollTo(0, 0); });
 

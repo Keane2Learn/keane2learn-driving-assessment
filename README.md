@@ -43,7 +43,28 @@ Worth grabbing next if you want it: **DRT122F** ("Car driving test waiting
 times and availability by driving test centre") — DVSA publishes this
 monthly and it's arguably the single most-asked practical question
 ("which centre near me has the shortest wait"). Not in the app yet since
-you haven't sent that file.
+you haven't sent that file — everything below is national/regional, not
+per-centre.
+
+### National context panel
+
+Five more files (DRT121A, DRT121D, DRT121E, DRT111C, DRT121G) went into a
+collapsible "National picture" card at the top of the list — GB-wide pass
+rate, first-time pass rate, zero-fault share, theory test pass rate,
+pass rate by attempt number, and median test-booking wait by region.
+These aren't tied to any single test centre, so — unlike everything
+else — they're **not** in Supabase; they're hardcoded as `NATIONAL_STATS`
+near the top of `index.html`'s script, since they're ~15 numbers that
+change once a year, not something worth a database table and RLS policies
+for. To refresh them next year: download the same five files from
+gov.uk, send them to Claude, and ask it to regenerate that object.
+
+One file was explicitly left out: **DRT111C is theory test data** — a
+different exam, at a different set of locations, run by a different part
+of DVSA. It only shows up here as one national headline number (the
+overall theory pass rate) for context; this app doesn't attempt a
+theory-test section, since the whole product is built around reviewing
+and comparing *practical* test centres.
 
 Paste the file's contents into the Supabase SQL Editor and run it — it
 migrates the schema (adds the first-attempt and age-breakdown tables) and
